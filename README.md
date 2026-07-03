@@ -78,6 +78,27 @@ Empty-region policy: if prediction and ground truth are both empty, Dice is 1
 and HD95 is 0 mm. If exactly one is empty, Dice is 0 and HD95 is set to the
 physical image diagonal, providing a finite worst-case penalty for aggregation.
 
+## Leakage-safe training from scratch
+
+The maintained training pipeline is organized as follows:
+
+- `src/superlightnet/patient_data.py` — manifest-selected patient datasets and patch generation.
+- `src/superlightnet/training.py` — isolation assertions, full-volume validation, and checkpoint helpers.
+- `scripts/train_patient_split.py` — command-line training entry point.
+- `checkpoints/leakage_safe/` — new patient-split checkpoints.
+- `results/leakage_safe/` — training logs and held-out evaluation results.
+
+From an Anaconda Prompt with CUDA-enabled PyTorch:
+
+```bat
+python scripts\train_patient_split.py --split_json splits\patient_splits.json --train_split train --val_split val --output_dir checkpoints\leakage_safe --epochs 100 --batch_size 1 --lr 0.001 --device cuda --roi_size 160,160,160
+```
+
+Training refuses to start if train, validation, and test patient IDs overlap or
+if an existing leakage-safe checkpoint/training log would be overwritten. Model
+selection uses the mean validation Dice across WT, TC, and ET. Test patients are
+reserved exclusively for final evaluation.
+
 🧠 Dataset
 BraTS2021 Challenge Dataset
 

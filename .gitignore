@@ -11,6 +11,9 @@ outputs/
 checkpoints/*
 !checkpoints/best.pth
 !checkpoints/.gitkeep
+!checkpoints/leakage_safe/
+checkpoints/leakage_safe/*
+!checkpoints/leakage_safe/.gitkeep
 
 # === GENERATED EVALUATION RESULTS ===
 results/leakage_safe/*
