@@ -23,7 +23,8 @@ from typing import Dict, Iterable, List, Sequence, Tuple
 import nibabel as nib
 import numpy as np
 import torch
-from scipy.ndimage import binary_erosion, distance_transform_edt
+from scipy.ndimage import binary_erosion
+from scipy.spatial import cKDTree
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
@@ -143,7 +144,13 @@ def sliding_window_predict(model, volume: np.ndarray, device: torch.device,
             for z in starts[2]:
                 slices = (slice(x, x + roi_size[0]), slice(y, y + roi_size[1]), slice(z, z + roi_size[2]))
                 patch = torch.from_numpy(padded[(slice(None),) + slices]).unsqueeze(0).to(device)
-                logits = model(patch)[0].float().cpu().numpy()
+                with torch.autocast(
+                    device_type=device.type,
+                    dtype=torch.float16,
+                    enabled=device.type == "cuda",
+                ):
+                    logits = model(patch)
+                logits = logits[0].float().cpu().numpy()
                 score_sum[(slice(None),) + slices] += logits
                 count_sum[slices] += 1.0
     if np.any(count_sum == 0):
@@ -185,9 +192,12 @@ def hd95(prediction: np.ndarray, ground_truth: np.ndarray,
     structure = np.ones((3, 3, 3), dtype=bool)
     pred_surface = prediction ^ binary_erosion(prediction, structure=structure, border_value=0)
     gt_surface = ground_truth ^ binary_erosion(ground_truth, structure=structure, border_value=0)
-    distance_to_gt = distance_transform_edt(~gt_surface, sampling=spacing)
-    distance_to_pred = distance_transform_edt(~pred_surface, sampling=spacing)
-    distances = np.concatenate((distance_to_gt[pred_surface], distance_to_pred[gt_surface]))
+    scale = np.asarray(spacing, dtype=np.float64)
+    pred_points = np.argwhere(pred_surface) * scale
+    gt_points = np.argwhere(gt_surface) * scale
+    pred_to_gt = cKDTree(gt_points).query(pred_points, k=1, workers=-1)[0]
+    gt_to_pred = cKDTree(pred_points).query(gt_points, k=1, workers=-1)[0]
+    distances = np.concatenate((pred_to_gt, gt_to_pred))
     return float(np.percentile(distances, 95))
 
 
@@ -265,6 +275,10 @@ def main():
     device = torch.device(args.device)
     if device.type == "cuda" and not torch.cuda.is_available():
         raise RuntimeError("CUDA was requested but is not available; pass --device cpu explicitly")
+    if device.type == "cuda":
+        torch.backends.cudnn.benchmark = True
+        torch.backends.cuda.matmul.allow_tf32 = True
+        torch.backends.cudnn.allow_tf32 = True
     if not args.split_json.is_file() or not args.checkpoint.is_file():
         raise FileNotFoundError("Split manifest or checkpoint does not exist")
     output_json = validate_output_paths(args.output_csv)
