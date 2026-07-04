@@ -35,6 +35,7 @@ LOG_COLUMNS = (
     "epoch", "train_loss", "val_loss", "val_dice_wt", "val_dice_tc",
     "val_dice_et", "learning_rate",
 )
+BATCH_LOG_COLUMNS = ("epoch", "step", "global_step", "batch_loss", "learning_rate")
 
 
 def parse_roi_size(value: str):
@@ -65,7 +66,15 @@ def resolve_dataset_root(split_json: Path) -> Path:
     return root
 
 
-def validate_output_locations(output_dir: Path):
+def last_logged_epoch(log_path: Path) -> int:
+    with log_path.open(newline="", encoding="utf-8") as handle:
+        rows = list(csv.DictReader(handle))
+    if not rows:
+        raise ValueError(f"Training log has no completed epochs: {log_path}")
+    return int(rows[-1]["epoch"])
+
+
+def validate_output_locations(output_dir: Path, resume: Path | None):
     expected = (PROJECT_ROOT / "checkpoints" / "leakage_safe").resolve()
     output_dir = output_dir.resolve()
     if output_dir != expected:
@@ -74,11 +83,47 @@ def validate_output_locations(output_dir: Path):
     best_path = output_dir / "best_patient_split.pth"
     last_path = output_dir / "last_patient_split.pth"
     log_path = PROJECT_ROOT / "results" / "leakage_safe" / "training_log.csv"
+    batch_log_path = PROJECT_ROOT / "results" / "leakage_safe" / "training_batch_log.csv"
     log_path.parent.mkdir(parents=True, exist_ok=True)
-    existing = [path for path in (best_path, last_path, log_path) if path.exists()]
-    if existing:
-        raise FileExistsError(f"Refusing to overwrite existing training artifact: {existing[0]}")
-    return best_path, last_path, log_path
+    if resume is None:
+        existing = [path for path in (best_path, last_path, log_path, batch_log_path) if path.exists()]
+        if existing:
+            raise FileExistsError(f"Refusing to overwrite existing training artifact: {existing[0]}")
+    else:
+        if resume.resolve() != last_path.resolve():
+            raise ValueError(f"Resume checkpoint must be the run's last checkpoint: {last_path}")
+        missing = [path for path in (last_path, log_path) if not path.is_file()]
+        if missing:
+            raise FileNotFoundError(f"Cannot resume; required artifact is missing: {missing[0]}")
+    return best_path, last_path, log_path, batch_log_path
+
+
+def load_resume_state(path: Path, model, optimizer, scaler, manifest_sha256: str,
+                      args, log_path: Path):
+    try:
+        checkpoint = torch.load(path, map_location=args.device, weights_only=True)
+    except TypeError:
+        checkpoint = torch.load(path, map_location=args.device)
+    expected = {
+        "split_manifest_sha256": manifest_sha256,
+        "train_split": args.train_split,
+        "val_split": args.val_split,
+        "roi_size": tuple(args.roi_size),
+        "seed": args.seed,
+    }
+    for key, value in expected.items():
+        actual = checkpoint.get(key)
+        if key == "roi_size" and actual is not None:
+            actual = tuple(actual)
+        if actual != value:
+            raise ValueError(f"Resume checkpoint mismatch for {key}: expected {value!r}, got {actual!r}")
+    completed_epoch = int(checkpoint["epoch"])
+    if last_logged_epoch(log_path) != completed_epoch:
+        raise ValueError("training_log.csv and last checkpoint disagree on the completed epoch")
+    model.load_state_dict(checkpoint["model"], strict=True)
+    optimizer.load_state_dict(checkpoint["opt"])
+    scaler.load_state_dict(checkpoint["scaler"])
+    return completed_epoch + 1, float(checkpoint["best_val_dice"])
 
 
 def main():
@@ -93,12 +138,15 @@ def main():
     parser.add_argument("--device", default="cuda")
     parser.add_argument("--roi_size", type=parse_roi_size, default=(160, 160, 160))
     parser.add_argument("--num_workers", type=int, default=0)
+    parser.add_argument("--val_workers", type=int, default=0)
     parser.add_argument("--samples_per_patient", type=int, default=1)
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--resume", type=Path, help="Resume from last_patient_split.pth")
     args = parser.parse_args()
 
-    if args.epochs < 1 or args.batch_size < 1 or args.lr <= 0:
-        parser.error("epochs, batch_size, and learning rate must be positive")
+    if (args.epochs < 1 or args.batch_size < 1 or args.lr <= 0 or
+            args.num_workers < 0 or args.val_workers < 0):
+        parser.error("epochs, batch_size, and learning rate must be positive; workers cannot be negative")
     device = torch.device(args.device)
     if device.type == "cuda" and not torch.cuda.is_available():
         raise RuntimeError("CUDA requested but unavailable in this Python environment")
@@ -107,7 +155,10 @@ def main():
         raise FileNotFoundError(split_json)
     splits = load_split_manifest(str(split_json))
     dataset_root = resolve_dataset_root(split_json)
-    best_path, last_path, log_path = validate_output_locations(args.output_dir)
+    resume_path = args.resume.resolve() if args.resume else None
+    best_path, last_path, log_path, batch_log_path = validate_output_locations(
+        args.output_dir, resume_path,
+    )
 
     train_dataset = PatientPatchDataset(
         dataset_root, splits[args.train_split], roi_size=args.roi_size,
@@ -131,6 +182,13 @@ def main():
         num_workers=args.num_workers, pin_memory=device.type == "cuda",
         persistent_workers=args.num_workers > 0, generator=loader_generator,
     )
+    val_loader_kwargs = {
+        "batch_size": 1, "shuffle": False, "num_workers": args.val_workers,
+        "pin_memory": device.type == "cuda", "persistent_workers": args.val_workers > 0,
+    }
+    if args.val_workers > 0:
+        val_loader_kwargs["prefetch_factor"] = 2
+    val_loader = DataLoader(val_dataset, **val_loader_kwargs)
     model = MultiEncoderRMDUNet(
         in_modalities=4, base_ch=16, num_stages=4, num_classes=4, rmd_enable=True,
     ).to(device)
@@ -139,15 +197,38 @@ def main():
     scaler = torch.cuda.amp.GradScaler(enabled=device.type == "cuda")
     manifest_sha256 = hashlib.sha256(split_json.read_bytes()).hexdigest()
     best_validation_dice = float("-inf")
+    start_epoch = 1
+    if resume_path is not None:
+        start_epoch, best_validation_dice = load_resume_state(
+            resume_path, model, optimizer, scaler, manifest_sha256, args, log_path,
+        )
+        if start_epoch > args.epochs:
+            raise ValueError(
+                f"Checkpoint completed epoch {start_epoch - 1}; --epochs must be at least {start_epoch}"
+            )
+        print(
+            f"RESUME CHECK PASSED: starting epoch {start_epoch}; "
+            f"best validation Dice={best_validation_dice:.6f}; "
+            f"restored learning rate={optimizer.param_groups[0]['lr']}."
+        )
 
-    with log_path.open("x", newline="", encoding="utf-8") as log_handle:
+    log_mode = "a" if resume_path else "x"
+    batch_log_mode = "a" if batch_log_path.exists() else "x"
+    with log_path.open(log_mode, newline="", encoding="utf-8") as log_handle, \
+            batch_log_path.open(batch_log_mode, newline="", encoding="utf-8") as batch_log_handle:
         log_writer = csv.DictWriter(log_handle, fieldnames=LOG_COLUMNS)
-        log_writer.writeheader()
+        batch_log_writer = csv.DictWriter(batch_log_handle, fieldnames=BATCH_LOG_COLUMNS)
+        if not resume_path:
+            log_writer.writeheader()
+        if batch_log_mode == "x":
+            batch_log_writer.writeheader()
         log_handle.flush()
-        for epoch in range(1, args.epochs + 1):
+        batch_log_handle.flush()
+        for epoch in range(start_epoch, args.epochs + 1):
             started = time.perf_counter()
             train_dataset.set_epoch(epoch)
             random.seed(args.seed + epoch)
+            loader_generator.manual_seed(args.seed + epoch)
             model.train()
             train_loss_total = 0.0
             for step, (images, targets) in enumerate(train_loader, start=1):
@@ -161,16 +242,26 @@ def main():
                 scaler.scale(loss).backward()
                 scaler.step(optimizer)
                 scaler.update()
-                train_loss_total += float(loss.item())
+                batch_loss = float(loss.item())
+                train_loss_total += batch_loss
+                batch_log_writer.writerow({
+                    "epoch": epoch, "step": step,
+                    "global_step": (epoch - 1) * len(train_loader) + step,
+                    "batch_loss": batch_loss,
+                    "learning_rate": float(optimizer.param_groups[0]["lr"]),
+                })
                 if step % 25 == 0 or step == len(train_loader):
                     print(f"Epoch {epoch}/{args.epochs} train {step}/{len(train_loader)} loss={loss.item():.6f}")
+                    batch_log_handle.flush()
             train_loss = train_loss_total / len(train_loader)
 
             model.eval()
             validation_loss = 0.0
             dice_totals = {"wt": 0.0, "tc": 0.0, "et": 0.0}
-            for index in range(len(val_dataset)):
-                volume, target, case_id = val_dataset[index]
+            for index, (volume, target, case_ids) in enumerate(val_loader):
+                volume = volume.squeeze(0)
+                target = target.squeeze(0)
+                case_id = case_ids[0]
                 prediction, case_loss = validate_volume(
                     model, volume, target, criterion, device, args.roi_size, overlap=0.5,
                 )
@@ -196,6 +287,8 @@ def main():
                 "val_dice_mean": selection_dice, "split_manifest_sha256": manifest_sha256,
                 "train_split": args.train_split, "val_split": args.val_split,
                 "roi_size": args.roi_size, "seed": args.seed,
+                "batch_size": args.batch_size,
+                "samples_per_patient": args.samples_per_patient,
             }
             save_checkpoint_atomic(last_path, checkpoint)
             if selection_dice > best_validation_dice:

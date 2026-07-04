@@ -94,6 +94,17 @@ From an Anaconda Prompt with CUDA-enabled PyTorch:
 python scripts\train_patient_split.py --split_json splits\patient_splits.json --train_split train --val_split val --output_dir checkpoints\leakage_safe --epochs 100 --batch_size 1 --lr 0.001 --device cuda --roi_size 160,160,160
 ```
 
+Resume the same run from its latest completed epoch and prefetch data with four
+training workers and two validation workers:
+
+```bat
+python scripts\train_patient_split.py --split_json splits\patient_splits.json --train_split train --val_split val --output_dir checkpoints\leakage_safe --epochs 100 --batch_size 1 --lr 0.001 --device cuda --roi_size 160,160,160 --num_workers 4 --val_workers 2 --resume checkpoints\leakage_safe\last_patient_split.pth
+```
+
+`training_log.csv` stores per-epoch losses and validation Dice.
+`training_batch_log.csv` stores each batch loss from the point at which batch
+logging was enabled; batch values printed before that point cannot be recovered.
+
 Training refuses to start if train, validation, and test patient IDs overlap or
 if an existing leakage-safe checkpoint/training log would be overwritten. Model
 selection uses the mean validation Dice across WT, TC, and ET. Test patients are
