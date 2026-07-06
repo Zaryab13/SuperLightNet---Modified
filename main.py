@@ -298,14 +298,71 @@ class Decoder3d(nn.Module):
             x = blk(x)
         return self.head(x)
 
+
+class ModalityAttentionFusion(nn.Module):
+    """
+    Modality-aware channel attention fusion.
+
+    Applies a shared SE-style MLP to each available modality feature, normalizes
+    attention logits across modalities per channel, then aggregates features by
+    the learned weights.
+    """
+    def __init__(self, channels: int, reduction: int = 4):
+        super().__init__()
+        hidden = max(1, channels // reduction)
+        self.mlp = nn.Sequential(
+            nn.Linear(channels, hidden),
+            nn.ReLU(inplace=True),
+            nn.Linear(hidden, channels),
+        )
+        self.last_attention = None
+
+    def forward(self, features: List[torch.Tensor], avail_mask: Optional[torch.Tensor] = None,
+                like: Optional[torch.Tensor] = None) -> torch.Tensor:
+        if len(features) == 0:
+            if like is None:
+                raise ValueError("Cannot infer zero-modality fusion shape without a reference tensor")
+            return torch.zeros_like(like)
+        if len(features) == 1 and avail_mask is None:
+            self.last_attention = None
+            return features[0]
+
+        stacked = torch.stack(features, dim=0)  # (M, B, C, D, H, W)
+        pooled = stacked.mean(dim=(3, 4, 5))    # (M, B, C)
+        logits = self.mlp(pooled)               # (M, B, C)
+
+        if avail_mask is not None:
+            mask = avail_mask.to(device=stacked.device, dtype=torch.bool)
+            if mask.ndim == 1:
+                if mask.numel() != len(features):
+                    raise ValueError("avail_mask length must match number of modality features")
+                mask = mask[:, None, None]
+            elif mask.ndim == 2:
+                if mask.shape != (stacked.shape[1], len(features)):
+                    raise ValueError("batched avail_mask must have shape (B, M)")
+                mask = mask.transpose(0, 1)[:, :, None]
+            else:
+                raise ValueError("avail_mask must have shape (M,) or (B, M)")
+            logits = logits.masked_fill(~mask, torch.finfo(logits.dtype).min)
+            weights = torch.softmax(logits, dim=0).masked_fill(~mask, 0.0)
+            normalizer = weights.sum(dim=0, keepdim=True).clamp_min(torch.finfo(weights.dtype).eps)
+            weights = weights / normalizer
+        else:
+            weights = torch.softmax(logits, dim=0)
+
+        self.last_attention = weights.detach()
+        return (stacked * weights[..., None, None, None]).sum(dim=0)
+
+
 class MultiEncoderRMDUNet(nn.Module):
     """
     Multi-encoder (one per modality) + Random Multi-View Drop (RMD) + LRS decoder.
     Encoders: separate small stacks per modality.
     RMD: during training, randomly drop K encoders (mask their outputs & skips).
-    Aggregation: mean of available encoder features at each level (robust to missing).
+    Aggregation: modality-aware channel attention fusion of available encoder features.
     """
-    def __init__(self, in_modalities: int, base_ch=16, num_stages=4, num_classes=4, rmd_enable=True):
+    def __init__(self, in_modalities: int, base_ch=16, num_stages=4, num_classes=4,
+                 rmd_enable=True, fusion_reduction: int = 4):
         super().__init__()
         self.in_modalities = in_modalities
         self.rmd_enable = rmd_enable
@@ -318,13 +375,39 @@ class MultiEncoderRMDUNet(nn.Module):
             Encoder3d(1, chs) for _ in range(in_modalities)
         ])
 
-        # bottleneck expects concat/agg of deepest encoder outputs -> we aggregate by mean
+        # bottleneck operates after modality-aware fusion of deepest encoder outputs
         self.bottleneck = Bottleneck3d(chs[-1], chs[-1])
+        self.skip_attention = nn.ModuleList([
+            ModalityAttentionFusion(ch, reduction=fusion_reduction) for ch in chs
+        ])
+        self.bott_attention = ModalityAttentionFusion(
+            channels=base_ch * (2 ** (num_stages - 1)),
+            reduction=fusion_reduction,
+        )
 
         # decoder with LRS
         self.decoder = Decoder3d(chs, out_ch=chs[0], num_classes=num_classes)
 
     def _aggregate_skips(self, list_of_skips: List[List[torch.Tensor]], keep_mask: torch.Tensor):
+        """
+        list_of_skips: list over modalities -> list over levels -> tensor (B,C,D,H,W)
+        keep_mask: (M,) or (B,M) bool tensor for modalities kept
+        Return attention-fused modalities at each level.
+        """
+        M = len(list_of_skips)
+        L = len(list_of_skips[0])
+        agg = []
+        for l in range(L):
+            if keep_mask.ndim == 1:
+                feats = [list_of_skips[m][l] for m in range(M) if keep_mask[m]]
+                agg.append(self.skip_attention[l](feats, like=list_of_skips[0][l]))
+            else:
+                feats = [list_of_skips[m][l] for m in range(M)]
+                agg.append(self.skip_attention[l](feats, avail_mask=keep_mask, like=list_of_skips[0][l]))
+        return agg
+
+    def _aggregate_skips_mean_unused(self, list_of_skips: List[List[torch.Tensor]], keep_mask: torch.Tensor):
+        return self._aggregate_skips(list_of_skips, keep_mask)
         """
         list_of_skips: list over modalities -> list over levels -> tensor (B,C,D,H,W)
         keep_mask: (M,) bool tensor for modalities kept
@@ -345,49 +428,56 @@ class MultiEncoderRMDUNet(nn.Module):
                 agg.append(torch.stack(feats, dim=0).mean(dim=0))
         return agg
 
-    def forward(self, x: torch.Tensor):
+    def forward(self, x: torch.Tensor, avail_mask: torch.Tensor = None):
         """
         x: (B, C=modalities, D, H, W)
+        avail_mask: optional bool tensor, shape (C,) or (B,C), marking true modalities.
         """
         B, C, D, H, W = x.shape
         assert C == self.in_modalities
 
-        # decide which modalities to keep (RMD)
         device = x.device
-        if self.training and self.rmd_enable and (random.random() < Cfg.rmd_prob):
-            # keep at least rmd_min_keep mods
+        if avail_mask is not None:
+            keep = avail_mask.to(device=device, dtype=torch.bool)
+            if keep.ndim == 1:
+                if keep.numel() != C:
+                    raise ValueError("avail_mask with shape (C,) must match input modality count")
+            elif keep.ndim == 2:
+                if keep.shape != (B, C):
+                    raise ValueError("avail_mask with shape (B,C) must match input batch and modality count")
+            else:
+                raise ValueError("avail_mask must have shape (C,) or (B,C)")
+        elif self.training and self.rmd_enable and (random.random() < Cfg.rmd_prob):
             idx = list(range(C))
             random.shuffle(idx)
-            k = random.randint(Cfg.rmd_min_keep, C)  # number to keep
+            k = random.randint(Cfg.rmd_min_keep, C)
             keep = torch.zeros(C, dtype=torch.bool, device=device)
             keep[idx[:k]] = True
         else:
             keep = torch.ones(C, dtype=torch.bool, device=device)
 
-        # pass through each encoder (per modality)
         all_skips = []
         bottlenecks = []
         for m in range(C):
             xm = x[:, m:m+1, ...]
-            if not keep[m]:
-                # if dropped, feed zeros (same shape) to keep graph structure
+            if keep.ndim == 1 and not keep[m]:
                 xm = torch.zeros_like(xm)
+            elif keep.ndim == 2:
+                xm = xm * keep[:, m].view(B, 1, 1, 1, 1).to(dtype=xm.dtype)
             skips, bott_in = self.encoders[m](xm)
             all_skips.append(skips)
             bottlenecks.append(bott_in)
 
-        # aggregate bottlenecks and skips across kept modalities
-        kept_bott = [bottlenecks[m] for m in range(C) if keep[m]]
-        if len(kept_bott) == 0:  # extremely unlikely due to min_keep
-            bott_mean = torch.zeros_like(bottlenecks[0])
+        if keep.ndim == 1:
+            kept_bott = [bottlenecks[m] for m in range(C) if keep[m]]
+            bott_fused = self.bott_attention(kept_bott, like=bottlenecks[0])
         else:
-            bott_mean = torch.stack(kept_bott, dim=0).mean(dim=0)
+            kept_bott = [bottlenecks[m] for m in range(C)]
+            bott_fused = self.bott_attention(kept_bott, avail_mask=keep, like=bottlenecks[0])
 
         agg_skips = self._aggregate_skips(all_skips, keep)
-
-        # bottleneck + decoder (with LRS)
-        z = self.bottleneck(bott_mean)
-        logits = self.decoder(z, agg_skips)  # (B, num_classes, d,h,w)
+        z = self.bottleneck(bott_fused)
+        logits = self.decoder(z, agg_skips)
         return logits
 
 # ----------------------------
