@@ -1,0 +1,2 @@
+epoch,all_dice_wt,all_dice_tc,all_dice_et,all_mean,drop_t1ce_dice_wt,drop_t1ce_dice_tc,drop_t1ce_dice_et,drop_t1ce_tc_et,constraint_threshold,constraint_met,selected_best
+0,0.8616772105382933,0.8342985799967046,0.799668937359359,0.8318815759647856,0.8361767421421162,0.21194527657916656,0.06074421770242417,0.13634474714079536,0.806925128685842,True,False

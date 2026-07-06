@@ -1,0 +1,2 @@
+epoch,train_loss,seg_loss,kd_loss,feature_loss,all_dice_wt,all_dice_tc,all_dice_et,all_mean,drop_t1ce_dice_wt,drop_t1ce_dice_tc,drop_t1ce_dice_et,drop_t1ce_tc_et,full_constraint_met,learning_rate,elapsed_sec
+1,nan,nan,nan,0.09241917593541348,,,,,,,,,,5e-05,229.20950659999653

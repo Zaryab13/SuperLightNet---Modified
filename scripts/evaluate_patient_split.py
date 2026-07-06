@@ -88,6 +88,9 @@ def zscore_nonzero(volume: np.ndarray) -> np.ndarray:
 
 
 def load_case(case_path: Path, selected_modalities: Sequence[str]):
+    avail_mask = torch.tensor(
+        [modality in selected_modalities for modality in MODEL_MODALITIES], dtype=torch.bool,
+    )
     channels: List[np.ndarray] = []
     reference = None
     shape = None
@@ -114,7 +117,8 @@ def load_case(case_path: Path, selected_modalities: Sequence[str]):
     ground_truth = gt_image.get_fdata(dtype=np.float32).astype(np.uint8)
     if ground_truth.shape != shape:
         raise ValueError(f"Ground-truth shape mismatch in {case_path.name}")
-    return np.stack(channels), ground_truth, tuple(float(v) for v in gt_image.header.get_zooms()[:3])
+    return (np.stack(channels), ground_truth,
+            tuple(float(v) for v in gt_image.header.get_zooms()[:3]), avail_mask)
 
 
 def window_starts(length: int, roi: int, overlap: float) -> List[int]:
@@ -128,7 +132,7 @@ def window_starts(length: int, roi: int, overlap: float) -> List[int]:
 
 
 @torch.inference_mode()
-def sliding_window_predict(model, volume: np.ndarray, device: torch.device,
+def sliding_window_predict(model, volume: np.ndarray, avail_mask: torch.Tensor, device: torch.device,
                            roi_size: Tuple[int, int, int], overlap: float) -> np.ndarray:
     """Run tiled inference and average overlapping logits on CPU."""
     spatial_shape = volume.shape[1:]
@@ -149,7 +153,7 @@ def sliding_window_predict(model, volume: np.ndarray, device: torch.device,
                     dtype=torch.float16,
                     enabled=device.type == "cuda",
                 ):
-                    logits = model(patch)
+                    logits = model(patch, avail_mask=avail_mask)
                 logits = logits[0].float().cpu().numpy()
                 score_sum[(slice(None),) + slices] += logits
                 count_sum[slices] += 1.0
@@ -297,13 +301,15 @@ def main():
     modality_label = ",".join(args.modalities)
     rows = []
     for index, (case_id, case_path) in enumerate(zip(evaluation_ids, case_paths), start=1):
-        volume, ground_truth, spacing = load_case(case_path, args.modalities)
+        volume, ground_truth, spacing, avail_mask = load_case(case_path, args.modalities)
         if device.type == "cuda":
             torch.cuda.empty_cache()
             torch.cuda.reset_peak_memory_stats(device)
             torch.cuda.synchronize(device)
         started = time.perf_counter()
-        prediction = sliding_window_predict(model, volume, device, args.roi_size, args.overlap)
+        prediction = sliding_window_predict(
+            model, volume, avail_mask, device, args.roi_size, args.overlap,
+        )
         if device.type == "cuda":
             torch.cuda.synchronize(device)
             peak_memory = torch.cuda.max_memory_allocated(device) / (1024.0 ** 2)

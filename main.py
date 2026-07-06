@@ -345,7 +345,7 @@ class MultiEncoderRMDUNet(nn.Module):
                 agg.append(torch.stack(feats, dim=0).mean(dim=0))
         return agg
 
-    def forward(self, x: torch.Tensor):
+    def forward(self, x: torch.Tensor, avail_mask: Optional[torch.Tensor] = None):
         """
         x: (B, C=modalities, D, H, W)
         """
@@ -361,6 +361,12 @@ class MultiEncoderRMDUNet(nn.Module):
             k = random.randint(Cfg.rmd_min_keep, C)  # number to keep
             keep = torch.zeros(C, dtype=torch.bool, device=device)
             keep[idx[:k]] = True
+        elif self.training and self.rmd_enable:
+            keep = torch.ones(C, dtype=torch.bool, device=device)
+        elif avail_mask is not None:
+            keep = avail_mask.to(device=device, dtype=torch.bool)
+            if keep.shape != (C,):
+                raise ValueError(f"avail_mask must have shape ({C},), got {tuple(keep.shape)}")
         else:
             keep = torch.ones(C, dtype=torch.bool, device=device)
 

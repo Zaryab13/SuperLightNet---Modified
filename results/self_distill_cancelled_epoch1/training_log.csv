@@ -1,0 +1,2 @@
+epoch,train_loss,seg_loss,kd_loss,feature_loss,val_dice_wt,val_dice_tc,val_dice_et,selection_tc_et,learning_rate,elapsed_sec
+1,0.5663836230933667,0.37078983575850727,0.07593878864729776,0.2393099951595068,,,,,0.0001,212.25176449999708
