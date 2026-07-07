@@ -246,8 +246,8 @@ def load_model(checkpoint_path: Path, device: torch.device, fusion_reduction: in
     return model
 
 
-def validate_output_paths(output_csv: Path) -> Path:
-    safe_root = (PROJECT_ROOT / "results" / "macaf").resolve()
+def validate_output_paths(output_csv: Path, output_dir: Path) -> Path:
+    safe_root = output_dir.resolve()
     output_csv = output_csv.resolve()
     if safe_root not in output_csv.parents:
         raise ValueError(f"--output_csv must be inside {safe_root}")
@@ -284,7 +284,7 @@ def output_stem(selected_modalities: Sequence[str]) -> str:
 def evaluate_subset(args, model, device: torch.device, evaluation_ids: Sequence[str],
                     case_paths: Sequence[Path], selected_modalities: Sequence[str],
                     output_csv: Path) -> None:
-    output_json = validate_output_paths(output_csv)
+    output_json = validate_output_paths(output_csv, args.output_dir)
     modality_label = ",".join(selected_modalities)
     avail_mask = modality_availability(selected_modalities, device)
     rows = []

@@ -74,16 +74,19 @@ def last_logged_epoch(log_path: Path) -> int:
     return int(rows[-1]["epoch"])
 
 
-def validate_output_locations(output_dir: Path, resume: Path | None):
-    expected = (PROJECT_ROOT / "checkpoints" / "macaf").resolve()
+def validate_output_locations(output_dir: Path | None, run_name: str, resume: Path | None):
+    suffix = f"macaf_{run_name}"
+    expected = (PROJECT_ROOT / "checkpoints" / suffix).resolve()
+    if output_dir is None:
+        output_dir = expected
     output_dir = output_dir.resolve()
     if output_dir != expected:
         raise ValueError(f"--output_dir must resolve to {expected}")
     output_dir.mkdir(parents=True, exist_ok=True)
     best_path = output_dir / "best_patient_split.pth"
     last_path = output_dir / "last_patient_split.pth"
-    log_path = PROJECT_ROOT / "results" / "macaf" / "training_log.csv"
-    batch_log_path = PROJECT_ROOT / "results" / "macaf" / "batch_log.csv"
+    log_path = PROJECT_ROOT / "results" / suffix / "training_log.csv"
+    batch_log_path = PROJECT_ROOT / "results" / suffix / "batch_log.csv"
     log_path.parent.mkdir(parents=True, exist_ok=True)
     if resume is None:
         existing = [path for path in (best_path, last_path, log_path, batch_log_path) if path.exists()]
@@ -111,6 +114,7 @@ def load_resume_state(path: Path, model, optimizer, scaler, manifest_sha256: str
         "roi_size": tuple(args.roi_size),
         "seed": args.seed,
         "fusion_reduction": args.fusion_reduction,
+        "run_name": args.run_name,
     }
     for key, value in expected.items():
         actual = checkpoint.get(key)
@@ -132,7 +136,8 @@ def main():
     parser.add_argument("--split_json", type=Path, default=Path("splits/patient_splits.json"))
     parser.add_argument("--train_split", choices=("train",), default="train")
     parser.add_argument("--val_split", choices=("val",), default="val")
-    parser.add_argument("--output_dir", type=Path, default=Path("checkpoints/macaf"))
+    parser.add_argument("--output_dir", type=Path)
+    parser.add_argument("--run_name", default="v1")
     parser.add_argument("--epochs", type=int, required=True)
     parser.add_argument("--batch_size", type=int, default=1)
     parser.add_argument("--lr", type=float, default=1e-3)
@@ -146,6 +151,8 @@ def main():
     parser.add_argument("--resume", type=Path, help="Resume from last_patient_split.pth")
     args = parser.parse_args()
 
+    if not args.run_name or any(char in args.run_name for char in "/\\:"):
+        parser.error("run_name must be non-empty and cannot contain path separators")
     if (args.epochs < 1 or args.batch_size < 1 or args.lr <= 0 or
             args.num_workers < 0 or args.val_workers < 0 or args.fusion_reduction < 1):
         parser.error(
@@ -162,7 +169,7 @@ def main():
     dataset_root = resolve_dataset_root(split_json)
     resume_path = args.resume.resolve() if args.resume else None
     best_path, last_path, log_path, batch_log_path = validate_output_locations(
-        args.output_dir, resume_path,
+        args.output_dir, args.run_name, resume_path,
     )
 
     train_dataset = PatientPatchDataset(
@@ -199,6 +206,9 @@ def main():
         fusion_reduction=args.fusion_reduction,
     ).to(device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=Cfg.weight_decay)
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+        optimizer, T_max=args.epochs, eta_min=1e-6,
+    )
     criterion = DiceCELoss(num_classes=4)
     scaler = torch.cuda.amp.GradScaler(enabled=device.type == "cuda")
     manifest_sha256 = hashlib.sha256(split_json.read_bytes()).hexdigest()
@@ -296,6 +306,7 @@ def main():
                 "batch_size": args.batch_size,
                 "samples_per_patient": args.samples_per_patient,
                 "fusion_reduction": args.fusion_reduction,
+                "run_name": args.run_name,
             }
             save_checkpoint_atomic(last_path, checkpoint)
             if selection_dice > best_validation_dice:
@@ -307,8 +318,9 @@ def main():
             print(
                 f"Epoch {epoch}: train_loss={train_loss:.6f} val_loss={val_loss:.6f} "
                 f"WT={val_dice['wt']:.6f} TC={val_dice['tc']:.6f} "
-                f"ET={val_dice['et']:.6f} time={elapsed:.1f}s"
+                f"ET={val_dice['et']:.6f} lr={learning_rate:.9g} time={elapsed:.1f}s"
             )
+            scheduler.step()
 
 
 if __name__ == "__main__":

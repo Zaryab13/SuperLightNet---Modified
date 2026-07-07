@@ -1,0 +1,81 @@
+{
+  "split": "test",
+  "fold": 0,
+  "modalities": [
+    "t2"
+  ],
+  "model_modality_order": [
+    "t1",
+    "t1ce",
+    "t2",
+    "flair"
+  ],
+  "avail_mask": [
+    false,
+    false,
+    true,
+    false
+  ],
+  "checkpoint": "D:\\SuperLignet Modified Project\\SuperLightNet---Modified\\checkpoints\\macaf_v2\\best_patient_split.pth",
+  "case_count": 126,
+  "empty_mask_policy": {
+    "both_empty": {
+      "dice": 1.0,
+      "hd95_mm": 0.0
+    },
+    "one_empty": {
+      "dice": 0.0,
+      "hd95_mm": "physical image diagonal"
+    }
+  },
+  "statistics": {
+    "dice_wt": {
+      "mean": 0.7131260961753181,
+      "std": 0.24096784513928157,
+      "median": 0.805711170071004,
+      "iqr": 0.19113903604278348
+    },
+    "dice_tc": {
+      "mean": 0.45947765845179683,
+      "std": 0.24588583208275078,
+      "median": 0.5050427027093034,
+      "iqr": 0.35513776608573144
+    },
+    "dice_et": {
+      "mean": 0.2929341576834449,
+      "std": 0.2034016053548777,
+      "median": 0.313403191693187,
+      "iqr": 0.3373897925629229
+    },
+    "hd95_wt": {
+      "mean": 25.699066732252696,
+      "std": 57.331634248973224,
+      "median": 9.164989018218593,
+      "iqr": 15.549523133929037
+    },
+    "hd95_tc": {
+      "mean": 37.095622160533814,
+      "std": 64.09041624521957,
+      "median": 19.25961064797157,
+      "iqr": 26.637858776851687
+    },
+    "hd95_et": {
+      "mean": 49.12301803575485,
+      "std": 96.47836394692428,
+      "median": 16.292082449564123,
+      "iqr": 25.647657764073205
+    },
+    "inference_time_sec": {
+      "mean": 0.473451706348449,
+      "std": 0.007338216201877019,
+      "median": 0.4726166999898851,
+      "iqr": 0.010597375003271736
+    },
+    "peak_gpu_memory_mb": {
+      "mean": 1529.80419921875,
+      "std": 0.0,
+      "median": 1529.80419921875,
+      "iqr": 0.0
+    }
+  }
+}
