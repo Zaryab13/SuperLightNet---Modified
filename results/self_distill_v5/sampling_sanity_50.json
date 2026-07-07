@@ -1,0 +1,8 @@
+{
+  "patches_checked": 50,
+  "actual_et_center_count": 23,
+  "actual_et_center_fraction": 0.46,
+  "forced_et_branch_count": 18,
+  "forced_et_branch_fraction": 0.36,
+  "empty_et_fallback_count": 0
+}
