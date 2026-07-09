@@ -1,0 +1,52 @@
+{
+  "checkpoint": "D:\\Zaryab\\3D Segmention-Brain Tumor\\SuperLightNet - Modified\\checkpoints\\swin_kd_v1\\fold1_model\\fold1_f48_ep300_4gpu_dice0_9059\\model.pt",
+  "checkpoint_sha256": "62b649ecf98b05c73d7a36a7e290e85ad90a9b5d0dab442f296342406feb57ba",
+  "case_count": 126,
+  "modalities": [
+    "t1",
+    "t1ce",
+    "t2",
+    "flair"
+  ],
+  "teacher_region_order": [
+    "TC",
+    "WT",
+    "ET"
+  ],
+  "student_to_teacher_reorder": [
+    3,
+    1,
+    0,
+    2
+  ],
+  "dice_wt": {
+    "mean": 0.9334092423878924,
+    "median": 0.9506051525541559,
+    "std": 0.053279163728183
+  },
+  "dice_tc": {
+    "mean": 0.9189966855245894,
+    "median": 0.9591455492212206,
+    "std": 0.12769236082540336
+  },
+  "dice_et": {
+    "mean": 0.8634595609154905,
+    "median": 0.9238826734655295,
+    "std": 0.19630625224560588
+  },
+  "hd95_wt": {
+    "mean": 2.4006518672367556,
+    "median": 1.7320508075688772,
+    "std": 5.164666043161606
+  },
+  "hd95_tc": {
+    "mean": 1.9551159321709224,
+    "median": 1.0,
+    "std": 4.045688562129692
+  },
+  "hd95_et": {
+    "mean": 13.630217656326728,
+    "median": 1.0,
+    "std": 64.90544789646827
+  }
+}

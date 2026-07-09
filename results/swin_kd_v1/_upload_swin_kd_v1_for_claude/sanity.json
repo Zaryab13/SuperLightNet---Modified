@@ -1,0 +1,210 @@
+{
+  "source_checkpoint": "D:\\Zaryab\\3D Segmention-Brain Tumor\\SuperLightNet - Modified\\checkpoints\\leakage_safe\\best_patient_split.pth",
+  "source_checkpoint_epoch": 68,
+  "student_full_stored": {
+    "wt": 0.8616756111689011,
+    "tc": 0.8342918984380353,
+    "et": 0.7996586234953138
+  },
+  "epoch0_all": {
+    "wt": 0.8616772105382933,
+    "tc": 0.8342985799967046,
+    "et": 0.799668937359359
+  },
+  "epoch0_drop_t1ce": {
+    "wt": 0.8361767421421162,
+    "tc": 0.21194527657916656,
+    "et": 0.06074421770242417
+  },
+  "student_all_baseline": 0.8318815759647856,
+  "full_constraint_threshold": 0.806925128685842,
+  "teacher_checkpoint": "D:\\Zaryab\\3D Segmention-Brain Tumor\\SuperLightNet - Modified\\checkpoints\\swin_kd_v1\\fold1_model\\fold1_f48_ep300_4gpu_dice0_9059\\model.pt",
+  "teacher_checkpoint_sha256": "62b649ecf98b05c73d7a36a7e290e85ad90a9b5d0dab442f296342406feb57ba",
+  "teacher_sanity": {
+    "case_ids": [
+      "BraTS2021_00000",
+      "BraTS2021_00005",
+      "BraTS2021_00006",
+      "BraTS2021_00008",
+      "BraTS2021_00011"
+    ],
+    "per_case": [
+      {
+        "tc": 0.9781600998395436,
+        "wt": 0.93747646266246,
+        "et": 0.9555184046332508
+      },
+      {
+        "tc": 0.9656070282627193,
+        "wt": 0.9552323219449246,
+        "et": 0.9118267242614695
+      },
+      {
+        "tc": 0.9647142177929838,
+        "wt": 0.965818542881966,
+        "et": 0.9279227331699582
+      },
+      {
+        "tc": 0.6643598615916955,
+        "wt": 0.9259278729891705,
+        "et": 0.652962515114873
+      },
+      {
+        "tc": 0.916479232268706,
+        "wt": 0.9516708171656918,
+        "et": 0.916885212830341
+      }
+    ],
+    "mean": {
+      "wt": 0.9472252035288425,
+      "tc": 0.8978640879511296,
+      "et": 0.8730231180019784
+    }
+  },
+  "leakage_gate": {
+    "teacher_fold": 1,
+    "monai_total_cases": 1251,
+    "monai_fold_training_cases": 1001,
+    "monai_fold_validation_cases": 250,
+    "our_test_cases": 126,
+    "teacher_training_our_test_overlap_count": 97,
+    "teacher_training_our_test_overlap_ids": [
+      "BraTS2021_00019",
+      "BraTS2021_00032",
+      "BraTS2021_00077",
+      "BraTS2021_00084",
+      "BraTS2021_00095",
+      "BraTS2021_00099",
+      "BraTS2021_00124",
+      "BraTS2021_00131",
+      "BraTS2021_00134",
+      "BraTS2021_00184",
+      "BraTS2021_00191",
+      "BraTS2021_00201",
+      "BraTS2021_00207",
+      "BraTS2021_00230",
+      "BraTS2021_00233",
+      "BraTS2021_00251",
+      "BraTS2021_00269",
+      "BraTS2021_00271",
+      "BraTS2021_00283",
+      "BraTS2021_00292",
+      "BraTS2021_00296",
+      "BraTS2021_00320",
+      "BraTS2021_00328",
+      "BraTS2021_00401",
+      "BraTS2021_00403",
+      "BraTS2021_00444",
+      "BraTS2021_00451",
+      "BraTS2021_00464",
+      "BraTS2021_00466",
+      "BraTS2021_00478",
+      "BraTS2021_00479",
+      "BraTS2021_00504",
+      "BraTS2021_00561",
+      "BraTS2021_00610",
+      "BraTS2021_00613",
+      "BraTS2021_00631",
+      "BraTS2021_00638",
+      "BraTS2021_00658",
+      "BraTS2021_00663",
+      "BraTS2021_00679",
+      "BraTS2021_00715",
+      "BraTS2021_00734",
+      "BraTS2021_00774",
+      "BraTS2021_00778",
+      "BraTS2021_00787",
+      "BraTS2021_00789",
+      "BraTS2021_00795",
+      "BraTS2021_00807",
+      "BraTS2021_00816",
+      "BraTS2021_01016",
+      "BraTS2021_01060",
+      "BraTS2021_01112",
+      "BraTS2021_01120",
+      "BraTS2021_01143",
+      "BraTS2021_01151",
+      "BraTS2021_01156",
+      "BraTS2021_01157",
+      "BraTS2021_01163",
+      "BraTS2021_01174",
+      "BraTS2021_01193",
+      "BraTS2021_01194",
+      "BraTS2021_01204",
+      "BraTS2021_01226",
+      "BraTS2021_01233",
+      "BraTS2021_01237",
+      "BraTS2021_01275",
+      "BraTS2021_01280",
+      "BraTS2021_01293",
+      "BraTS2021_01335",
+      "BraTS2021_01344",
+      "BraTS2021_01355",
+      "BraTS2021_01356",
+      "BraTS2021_01362",
+      "BraTS2021_01374",
+      "BraTS2021_01426",
+      "BraTS2021_01438",
+      "BraTS2021_01509",
+      "BraTS2021_01514",
+      "BraTS2021_01515",
+      "BraTS2021_01519",
+      "BraTS2021_01532",
+      "BraTS2021_01546",
+      "BraTS2021_01556",
+      "BraTS2021_01565",
+      "BraTS2021_01577",
+      "BraTS2021_01588",
+      "BraTS2021_01622",
+      "BraTS2021_01635",
+      "BraTS2021_01636",
+      "BraTS2021_01640",
+      "BraTS2021_01647",
+      "BraTS2021_01648",
+      "BraTS2021_01659",
+      "BraTS2021_01660",
+      "BraTS2021_01661",
+      "BraTS2021_01663",
+      "BraTS2021_01666"
+    ],
+    "teacher_modalities": [
+      "flair",
+      "t1ce",
+      "t1",
+      "t2"
+    ],
+    "student_modalities": [
+      "t1",
+      "t1ce",
+      "t2",
+      "flair"
+    ],
+    "student_to_teacher_reorder": [
+      3,
+      1,
+      0,
+      2
+    ],
+    "teacher_region_order": [
+      "tc",
+      "wt",
+      "et"
+    ],
+    "baseline_warning": "The external teacher must not be reported as a baseline on our test split because its fold-training data overlap our test cases. Student test numbers remain leakage-safe because KD uses only our training split."
+  },
+  "normalization": "per-channel z-score over nonzero voxels",
+  "teacher_region_order": [
+    "tc",
+    "wt",
+    "et"
+  ],
+  "student_to_teacher_reorder": [
+    3,
+    1,
+    0,
+    2
+  ],
+  "batchnorm_modules_frozen": 42,
+  "batchnorm_affine_parameters_frozen": 5312,
+  "trainable_optimizer_parameters": 5790436
+}
