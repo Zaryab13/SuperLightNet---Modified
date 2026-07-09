@@ -237,7 +237,7 @@ def load_model(checkpoint_path: Path, device: torch.device, fusion_reduction: in
     ).to(device)
     try:
         checkpoint = torch.load(checkpoint_path, map_location=device, weights_only=True)
-    except TypeError:
+    except Exception:
         checkpoint = torch.load(checkpoint_path, map_location=device)
     state_dict = checkpoint.get("model", checkpoint)
     model.load_state_dict(state_dict)
