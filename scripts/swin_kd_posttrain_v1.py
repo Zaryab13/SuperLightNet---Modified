@@ -31,7 +31,7 @@ from superlightnet.patient_data import PatientPatchDataset, PatientVolumeDataset
 from superlightnet.training import save_checkpoint_atomic  # noqa: E402
 
 CHECKPOINT_DIR = PROJECT_ROOT / "checkpoints" / "swin_kd_v1"
-RESULT_DIR = PROJECT_ROOT / "results" / "swin_kd_v1"
+RESULT_DIR = PROJECT_ROOT / "results" / "02_kd_old_swin" / "swin_kd_v1"
 ALL_MODALITIES = ("t1", "t1ce", "t2", "flair")
 DROP_T1CE_MODALITIES = ("t1", "t2", "flair")
 TEACHER_MODALITIES = ("flair", "t1ce", "t1", "t2")
@@ -415,7 +415,7 @@ def main() -> None:
     )
 
     stored = common.stored_validation_row(
-        PROJECT_ROOT / "results" / "leakage_safe" / "training_log.csv",
+        PROJECT_ROOT / "results" / "01_base_model" / "leakage_safe" / "leakage_safe_training_log.csv",
         args.source_checkpoint_epoch,
     )
     epoch_zero_all, epoch_zero_drop = v2.validate_both(
@@ -506,9 +506,9 @@ def main() -> None:
     nonfinite_steps = []
     successful_global_steps = 0
 
-    epoch_path = RESULT_DIR / "training_log.csv"
-    batch_path = RESULT_DIR / "training_batch_log.csv"
-    tradeoff_path = RESULT_DIR / "validation_tradeoff.csv"
+    epoch_path = RESULT_DIR / "swin_kd_v1_training_log.csv"
+    batch_path = RESULT_DIR / "swin_kd_v1_training_batch_log.csv"
+    tradeoff_path = RESULT_DIR / "swin_kd_v1_validation_tradeoff.csv"
     with epoch_path.open("x", newline="", encoding="utf-8") as epoch_handle, \
             batch_path.open("x", newline="", encoding="utf-8") as batch_handle, \
             tradeoff_path.open("x", newline="", encoding="utf-8") as tradeoff_handle:

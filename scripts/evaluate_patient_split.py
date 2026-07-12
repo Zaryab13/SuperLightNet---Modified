@@ -248,7 +248,7 @@ def load_model(checkpoint_path: Path, device: torch.device):
 
 
 def validate_output_paths(output_csv: Path) -> Path:
-    safe_root = (PROJECT_ROOT / "results" / "leakage_safe").resolve()
+    safe_root = (PROJECT_ROOT / "results" / "01_base_model" / "leakage_safe").resolve()
     output_csv = output_csv.resolve()
     if safe_root not in output_csv.parents:
         raise ValueError(f"--output_csv must be inside {safe_root}")

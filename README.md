@@ -65,7 +65,7 @@ python scripts/evaluate_patient_split.py `
   --split_json splits/patient_splits.json `
   --split test `
   --checkpoint checkpoints/best.pth `
-  --output_csv results/leakage_safe/test_all_best.csv `
+  --output_csv results/01_base_model/leakage_safe/test_all_best.csv `
   --device cuda `
   --modalities all
 ```
@@ -86,7 +86,7 @@ The maintained training pipeline is organized as follows:
 - `src/superlightnet/training.py` — isolation assertions, full-volume validation, and checkpoint helpers.
 - `scripts/train_patient_split.py` — command-line training entry point.
 - `checkpoints/leakage_safe/` — new patient-split checkpoints.
-- `results/leakage_safe/` — training logs and held-out evaluation results.
+- `results/01_base_model/leakage_safe/` — training logs and held-out evaluation results.
 
 From an Anaconda Prompt with CUDA-enabled PyTorch:
 
@@ -101,8 +101,8 @@ training workers and two validation workers:
 python scripts\train_patient_split.py --split_json splits\patient_splits.json --train_split train --val_split val --output_dir checkpoints\leakage_safe --epochs 100 --batch_size 1 --lr 0.001 --device cuda --roi_size 160,160,160 --num_workers 4 --val_workers 2 --resume checkpoints\leakage_safe\last_patient_split.pth
 ```
 
-`training_log.csv` stores per-epoch losses and validation Dice.
-`training_batch_log.csv` stores each batch loss from the point at which batch
+`leakage_safe_training_log.csv` stores per-epoch losses and validation Dice.
+`leakage_safe_training_batch_log.csv` stores each batch loss from the point at which batch
 logging was enabled; batch values printed before that point cannot be recovered.
 
 Training refuses to start if train, validation, and test patient IDs overlap or

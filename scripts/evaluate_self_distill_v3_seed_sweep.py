@@ -60,7 +60,7 @@ def main() -> None:
         PROJECT_ROOT / "checkpoints" / f"self_distill_v3_seed{args.seed}" /
         f"best_self_distill_v3_seed{args.seed}.pth"
     )
-    output_dir = PROJECT_ROOT / "results" / f"self_distill_v3_seed{args.seed}_sweep"
+    output_dir = PROJECT_ROOT / "results" / "03_self_kd" / f"self_distill_v3_seed{args.seed}_sweep"
     manifest_sha256 = hashlib.sha256(split_json.read_bytes()).hexdigest()
     if manifest_sha256 != EXPECTED_MANIFEST_SHA256:
         raise RuntimeError(

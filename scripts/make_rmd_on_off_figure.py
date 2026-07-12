@@ -12,7 +12,7 @@ plt.rcParams.update({
     "figure.dpi": 300,
 })
 
-df = pd.read_csv("results/paper_tables/rmd_on_vs_off_common5.csv")
+df = pd.read_csv("results/05_analysis/paper_tables/rmd_on_vs_off_common5.csv")
 subsets = ["all", "drop T1", "drop T1ce", "drop T2", "drop FLAIR"]
 regions = [("dice_wt", "WT Dice"), ("dice_tc", "TC Dice"), ("dice_et", "ET Dice")]
 colors = {"RMD ON": "#2a78d6", "RMD OFF": "#c0392b"}

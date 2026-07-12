@@ -16,8 +16,8 @@ checkpoints/leakage_safe/*
 !checkpoints/leakage_safe/.gitkeep
 
 # === GENERATED EVALUATION RESULTS ===
-results/leakage_safe/*
-!results/leakage_safe/.gitkeep
+results/01_base_model/leakage_safe/*
+!results/01_base_model/leakage_safe/.gitkeep
 
 # === PYTHON CACHES ===
 __pycache__/

@@ -35,7 +35,7 @@ from superlightnet.patient_data import PatientPatchDataset  # noqa: E402
 from superlightnet.training import save_checkpoint_atomic  # noqa: E402
 
 CHECKPOINT_DIR = PROJECT_ROOT / "checkpoints" / "self_distill"
-RESULT_DIR = PROJECT_ROOT / "results" / "self_distill"
+RESULT_DIR = PROJECT_ROOT / "results" / "03_self_kd" / "self_distill"
 DROP_T1CE_MODALITIES = ("t1", "t2", "flair")
 ALL_MODALITIES = tuple(MODEL_MODALITIES)
 EPOCH_LOG_COLUMNS = (
@@ -283,7 +283,7 @@ def main() -> None:
         raise RuntimeError("Student and teacher are not identical at step zero")
 
     stored = stored_validation_row(
-        PROJECT_ROOT / "results" / "leakage_safe" / "training_log.csv",
+        PROJECT_ROOT / "results" / "01_base_model" / "leakage_safe" / "leakage_safe_training_log.csv",
         args.source_checkpoint_epoch,
     )
     teacher_validation = validate_subset(
@@ -312,8 +312,8 @@ def main() -> None:
 
     CHECKPOINT_DIR.mkdir(parents=True, exist_ok=False)
     RESULT_DIR.mkdir(parents=True, exist_ok=False)
-    epoch_log_path = RESULT_DIR / "training_log.csv"
-    batch_log_path = RESULT_DIR / "training_batch_log.csv"
+    epoch_log_path = RESULT_DIR / "self_distill_training_log.csv"
+    batch_log_path = RESULT_DIR / "self_distill_training_batch_log.csv"
     sanity_path = RESULT_DIR / "sanity.json"
     sanity_path.write_text(json.dumps({
         "source_checkpoint": str(checkpoint_path),

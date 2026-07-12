@@ -196,7 +196,7 @@ def main() -> None:
     parser.add_argument("--temperature", type=float, default=2.0)
     args = parser.parse_args()
     checkpoint_dir = PROJECT_ROOT / "checkpoints" / f"self_distill_v3_seed{args.seed}"
-    result_dir = PROJECT_ROOT / "results" / f"self_distill_v3_seed{args.seed}"
+    result_dir = PROJECT_ROOT / "results" / "03_self_kd" / f"self_distill_v3_seed{args.seed}"
 
     if (args.epochs < 1 or args.lr <= 0 or args.batch_size < 1 or args.val_every < 1 or
             args.early_stop_patience < 1 or args.samples_per_patient < 1 or
@@ -292,7 +292,7 @@ def main() -> None:
         raise RuntimeError("Student and teacher are not identical at epoch zero")
 
     stored = common.stored_validation_row(
-        PROJECT_ROOT / "results" / "leakage_safe" / "training_log.csv",
+        PROJECT_ROOT / "results" / "01_base_model" / "leakage_safe" / "leakage_safe_training_log.csv",
         args.source_checkpoint_epoch,
     )
     epoch_zero_all, epoch_zero_drop = v2.validate_both(
@@ -379,9 +379,10 @@ def main() -> None:
     nonfinite_steps = []
     successful_global_steps = 0
 
-    epoch_path = result_dir / "training_log.csv"
-    batch_path = result_dir / "training_batch_log.csv"
-    tradeoff_path = result_dir / "validation_tradeoff.csv"
+    run_prefix = f"self_distill_v3_seed{args.seed}"
+    epoch_path = result_dir / f"{run_prefix}_training_log.csv"
+    batch_path = result_dir / f"{run_prefix}_training_batch_log.csv"
+    tradeoff_path = result_dir / f"{run_prefix}_validation_tradeoff.csv"
     with epoch_path.open("x", newline="", encoding="utf-8") as epoch_handle, \
             batch_path.open("x", newline="", encoding="utf-8") as batch_handle, \
             tradeoff_path.open("x", newline="", encoding="utf-8") as tradeoff_handle:

@@ -82,8 +82,8 @@ def validate_output_locations(output_dir: Path, resume: Path | None):
     output_dir.mkdir(parents=True, exist_ok=True)
     best_path = output_dir / "best_patient_split.pth"
     last_path = output_dir / "last_patient_split.pth"
-    log_path = PROJECT_ROOT / "results" / "leakage_safe" / "training_log.csv"
-    batch_log_path = PROJECT_ROOT / "results" / "leakage_safe" / "training_batch_log.csv"
+    log_path = PROJECT_ROOT / "results" / "01_base_model" / "leakage_safe" / "leakage_safe_training_log.csv"
+    batch_log_path = PROJECT_ROOT / "results" / "01_base_model" / "leakage_safe" / "leakage_safe_training_batch_log.csv"
     log_path.parent.mkdir(parents=True, exist_ok=True)
     if resume is None:
         existing = [path for path in (best_path, last_path, log_path, batch_log_path) if path.exists()]
@@ -119,7 +119,7 @@ def load_resume_state(path: Path, model, optimizer, scaler, manifest_sha256: str
             raise ValueError(f"Resume checkpoint mismatch for {key}: expected {value!r}, got {actual!r}")
     completed_epoch = int(checkpoint["epoch"])
     if last_logged_epoch(log_path) != completed_epoch:
-        raise ValueError("training_log.csv and last checkpoint disagree on the completed epoch")
+        raise ValueError("The leakage-safe training log and last checkpoint disagree on the completed epoch")
     model.load_state_dict(checkpoint["model"], strict=True)
     optimizer.load_state_dict(checkpoint["opt"])
     scaler.load_state_dict(checkpoint["scaler"])

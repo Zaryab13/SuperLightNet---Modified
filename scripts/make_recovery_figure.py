@@ -10,7 +10,7 @@ plt.rcParams.update({
 })
 COLORS = {"WT": "#2a78d6", "TC": "#e0a02a", "ET": "#c0392b"}
 
-df = pd.read_csv("results/paper_tables/fig_data_recovery_summary.csv")
+df = pd.read_csv("results/05_analysis/paper_tables/fig_data_recovery_summary.csv")
 panelA = df[df.subset == "all"].set_index("condition").reindex(
     ["eval_fixed_preKD", "eval_fixed_postKD"])
 panelB = df[df.subset == "t1_t2_flair"].set_index("condition").reindex(

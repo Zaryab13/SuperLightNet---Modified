@@ -1,0 +1,27 @@
+{
+  "source_checkpoint": "D:\\Zaryab\\3D Segmention-Brain Tumor\\SuperLightNet - Modified\\checkpoints\\leakage_safe\\best_patient_split.pth",
+  "source_checkpoint_sha256": "c24cb1ce804abfba205fc660bd762b520b949180d2e8d4e111bc2ee576fdd3c4",
+  "source_checkpoint_epoch": 68,
+  "student_teacher_identical": true,
+  "max_parameter_difference": 0.0,
+  "teacher_full_stored": {
+    "wt": 0.8616756111689011,
+    "tc": 0.8342918984380353,
+    "et": 0.7996586234953138
+  },
+  "epoch0_all": {
+    "wt": 0.8616772105382933,
+    "tc": 0.8342985799967046,
+    "et": 0.799668937359359
+  },
+  "epoch0_drop_t1ce": {
+    "wt": 0.8361767421421162,
+    "tc": 0.21194527657916656,
+    "et": 0.06074421770242417
+  },
+  "teacher_all_baseline": 0.8318815759647856,
+  "full_constraint_threshold": 0.806925128685842,
+  "batchnorm_modules_frozen": 42,
+  "batchnorm_affine_parameters_frozen": 5312,
+  "trainable_optimizer_parameters": 5790436
+}

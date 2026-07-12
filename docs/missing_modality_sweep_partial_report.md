@@ -65,7 +65,7 @@ only and use validation data for further model choices.
 
 ## Source files
 
-- `results/leakage_safe/test_<subset>_patient_split.csv`
-- `results/leakage_safe/test_<subset>_patient_split.json`
-- `results/leakage_safe/missing_modality_sweep.log`
+- `results/01_base_model/leakage_safe/test_<subset>_patient_split.csv`
+- `results/01_base_model/leakage_safe/test_<subset>_patient_split.json`
+- `results/01_base_model/leakage_safe/missing_modality_sweep.log`
 - `scripts/run_missing_modality_sweep.bat`

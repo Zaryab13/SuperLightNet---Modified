@@ -26,8 +26,8 @@ exit /b 0
 :run_subset
 set "SUBSET=%~1"
 set "MODALITIES=%~2"
-set "OUTPUT_CSV=results\leakage_safe\test_%SUBSET%_patient_split.csv"
-set "OUTPUT_JSON=results\leakage_safe\test_%SUBSET%_patient_split.json"
+set "OUTPUT_CSV=results\01_base_model\leakage_safe\test_%SUBSET%_patient_split.csv"
+set "OUTPUT_JSON=results\01_base_model\leakage_safe\test_%SUBSET%_patient_split.json"
 
 if exist "%OUTPUT_CSV%" (
     echo SKIP: "%OUTPUT_CSV%" already exists.

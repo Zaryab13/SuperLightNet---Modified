@@ -1,0 +1,29 @@
+{
+  "name": "reorder_3102",
+  "reorder": [
+    3,
+    1,
+    0,
+    2
+  ],
+  "case_count": 126,
+  "mean_dice_wt": 0.9334739821616023,
+  "mean_dice_tc": 0.9189819565986259,
+  "mean_dice_et": 0.8634789679859782,
+  "teacher_checkpoint": "D:\\Zaryab\\3D Segmention-Brain Tumor\\SuperLightNet - Modified\\checkpoints\\swin_kd_v1\\fold1_model\\fold1_f48_ep300_4gpu_dice0_9059\\model.pt",
+  "teacher_sha256": "62b649ecf98b05c73d7a36a7e290e85ad90a9b5d0dab442f296342406feb57ba",
+  "split_json": "D:\\Zaryab\\3D Segmention-Brain Tumor\\SuperLightNet - Modified\\splits\\patient_splits.json",
+  "split_manifest_sha256": "9b411a68dc8ac8878d5e01f40b966d451d926c68afa6b960bf40a38422a55881",
+  "roi_size": [
+    128,
+    128,
+    128
+  ],
+  "overlap": 0.5,
+  "threshold": 0.5,
+  "teacher_output_order": [
+    "tc",
+    "wt",
+    "et"
+  ]
+}

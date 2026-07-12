@@ -83,7 +83,7 @@ This milestone added the maintained patient-isolated training stack:
   Dice, and atomic checkpoint writes;
 - `scripts/train_patient_split.py` as the command-line trainer;
 - protected output locations under `checkpoints/leakage_safe/` and
-  `results/leakage_safe/`.
+  `results/01_base_model/leakage_safe/`.
 
 Training uses ROI `(160, 160, 160)`, seed `42`, AdamW with learning rate `0.001`, and model
 selection by the unweighted mean of validation WT, TC, and ET Dice. Validation uses complete
@@ -223,7 +223,7 @@ python -u scripts\train_ablation.py --split_json splits\patient_splits.json --tr
 ```
 
 It writes checkpoints to `checkpoints/ablation_no_rmd_manual/` and logs to
-`results/ablation_no_rmd_manual/`, leaving the validated pipeline untouched. Validation is
+`results/01_base_model/ablation_no_rmd_manual/`, leaving the validated pipeline untouched. Validation is
 performed every five epochs, so validation columns are intentionally blank at other epochs.
 
 At the captured snapshot, training had logged through epoch 13. The validated epochs were:
@@ -235,7 +235,7 @@ At the captured snapshot, training had logged through epoch 13. The validated ep
 
 This run was ongoing when the snapshot was taken; the table is not a final result.
 
-An earlier interrupted attempt wrote partial logs under `results/ablation_no_rmd/`. Those
+An earlier interrupted attempt wrote partial logs under `results/01_base_model/ablation_no_rmd/`. Those
 artifacts are not the canonical manual run and remain untracked.
 
 ## Class-imbalance diagnostic
@@ -288,7 +288,7 @@ window. The original training-time RMD branch is unchanged, and an all-true mask
 the full-modality path.
 
 The corrected original-checkpoint sweep covers all 15 non-empty modality subsets under
-`results/leakage_safe_fixed/`. A self-distillation series then used the original leakage-safe
+`results/01_base_model/leakage_safe_fixed/`. A self-distillation series then used the original leakage-safe
 checkpoint as both the frozen full-modality teacher and initial student:
 
 - v1 recovered missing-T1ce performance but catastrophically forgot the all-modality path;
@@ -298,8 +298,8 @@ checkpoint as both the frozen full-modality teacher and initial student:
   skipped/non-finite steps;
 - selected v3 epoch 30 preserved full-modality performance and produced held-out missing-T1ce
   Dice WT `0.8874`, TC `0.5997`, and ET `0.4651`;
-- the complete post-KD 15-subset sweep is in `results/self_distill_v3_sweep/`, with the
-  three-era comparison in `results/paper_tables/missing_modality_master_table.csv`.
+- the complete post-KD 15-subset sweep is in `results/03_self_kd/self_distill_v3_sweep/`, with the
+  three-era comparison in `results/05_analysis/paper_tables/missing_modality_master_table.csv`.
 
 `scripts/self_distill_posttrain_v4.py` is the current specialization experiment. It starts
 fresh from the original teacher, uses a 30/50/20 full/drop-T1ce/random mask distribution,
@@ -312,7 +312,7 @@ logs and checkpoints were intentionally not committed.
 - `checkpoints/best.pth` was removed from the maintained tree; experiment checkpoints remain
   excluded from Git.
 - The RMD-off run completed and its five common-subset evaluations are recorded under
-  `results/ablation_no_rmd/`.
+  `results/01_base_model/ablation_no_rmd/`.
 - RMD-on has complete 15-subset evaluation tables; RMD-off currently has only all-modality
   plus four single-drop evaluations.
 - v4 runtime outputs remain local and in progress. Do not clean, overwrite, or treat them as

@@ -29,7 +29,7 @@ from superlightnet.patient_data import PatientPatchDataset  # noqa: E402
 from superlightnet.training import save_checkpoint_atomic  # noqa: E402
 
 CHECKPOINT_DIR = PROJECT_ROOT / "checkpoints" / "self_distill_v2"
-RESULT_DIR = PROJECT_ROOT / "results" / "self_distill_v2"
+RESULT_DIR = PROJECT_ROOT / "results" / "03_self_kd" / "self_distill_v2"
 ALL_MODALITIES = ("t1", "t1ce", "t2", "flair")
 DROP_T1CE_MODALITIES = ("t1", "t2", "flair")
 
@@ -204,7 +204,7 @@ def main() -> None:
         raise RuntimeError("Student and teacher are not identical at epoch zero")
 
     stored = common.stored_validation_row(
-        PROJECT_ROOT / "results" / "leakage_safe" / "training_log.csv",
+        PROJECT_ROOT / "results" / "01_base_model" / "leakage_safe" / "leakage_safe_training_log.csv",
         args.source_checkpoint_epoch,
     )
     epoch_zero_all, epoch_zero_drop = validate_both(
@@ -270,9 +270,9 @@ def main() -> None:
     best_score = float("-inf")
     validation_history = []
 
-    epoch_path = RESULT_DIR / "training_log.csv"
-    batch_path = RESULT_DIR / "training_batch_log.csv"
-    tradeoff_path = RESULT_DIR / "validation_tradeoff.csv"
+    epoch_path = RESULT_DIR / "self_distill_v2_training_log.csv"
+    batch_path = RESULT_DIR / "self_distill_v2_training_batch_log.csv"
+    tradeoff_path = RESULT_DIR / "self_distill_v2_validation_tradeoff.csv"
     with epoch_path.open("x", newline="", encoding="utf-8") as epoch_handle, \
             batch_path.open("x", newline="", encoding="utf-8") as batch_handle, \
             tradeoff_path.open("x", newline="", encoding="utf-8") as tradeoff_handle:
