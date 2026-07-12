@@ -7,6 +7,7 @@ import argparse
 import csv
 import hashlib
 import json
+import math
 import random
 import sys
 import time
@@ -95,14 +96,43 @@ def validate_output_locations(output_dir: Path | None, run_name: str, resume: Pa
     else:
         if resume.resolve() != last_path.resolve():
             raise ValueError(f"Resume checkpoint must be the run's last checkpoint: {last_path}")
-        missing = [path for path in (last_path, log_path) if not path.is_file()]
+        missing = [path for path in (last_path,) if not path.is_file()]
         if missing:
             raise FileNotFoundError(f"Cannot resume; required artifact is missing: {missing[0]}")
     return best_path, last_path, log_path, batch_log_path
 
 
+def make_warmup_cosine_lambda(epochs: int, warmup_epochs: int, lr: float, eta_min: float):
+    def lr_lambda(epoch: int) -> float:
+        if epoch < warmup_epochs:
+            return (epoch + 1) / warmup_epochs
+        progress = (epoch - warmup_epochs) / max(1, epochs - warmup_epochs)
+        eta_min_ratio = eta_min / lr
+        return eta_min_ratio + 0.5 * (1.0 - eta_min_ratio) * (1.0 + math.cos(math.pi * progress))
+    return lr_lambda
+
+
+def print_lr_schedule_preview(args) -> None:
+    lr_lambda = make_warmup_cosine_lambda(args.epochs, args.warmup_epochs, args.lr, args.eta_min)
+    print("LR schedule preview:")
+    for epoch in (1, 5, 10, 25, 50, 75, 100):
+        if epoch <= args.epochs:
+            print(f"  epoch {epoch}: {args.lr * lr_lambda(epoch - 1):.10g}")
+
+
+def set_scheduler_resume_position(scheduler, optimizer, args, completed_epoch: int) -> None:
+    """Position LambdaLR for the next epoch when older checkpoints lack scheduler state."""
+    lr_lambda = make_warmup_cosine_lambda(args.epochs, args.warmup_epochs, args.lr, args.eta_min)
+    next_epoch_index = min(completed_epoch, args.epochs - 1)
+    next_lr = args.lr * lr_lambda(next_epoch_index)
+    for group in optimizer.param_groups:
+        group["lr"] = next_lr
+    scheduler.last_epoch = completed_epoch
+    scheduler._last_lr = [group["lr"] for group in optimizer.param_groups]
+
+
 def load_resume_state(path: Path, model, optimizer, scaler, manifest_sha256: str,
-                      args, log_path: Path):
+                      args, log_path: Path, scheduler):
     try:
         checkpoint = torch.load(path, map_location=args.device, weights_only=True)
     except TypeError:
@@ -115,6 +145,8 @@ def load_resume_state(path: Path, model, optimizer, scaler, manifest_sha256: str
         "seed": args.seed,
         "fusion_reduction": args.fusion_reduction,
         "run_name": args.run_name,
+        "warmup_epochs": args.warmup_epochs,
+        "eta_min": args.eta_min,
     }
     for key, value in expected.items():
         actual = checkpoint.get(key)
@@ -123,11 +155,18 @@ def load_resume_state(path: Path, model, optimizer, scaler, manifest_sha256: str
         if actual != value:
             raise ValueError(f"Resume checkpoint mismatch for {key}: expected {value!r}, got {actual!r}")
     completed_epoch = int(checkpoint["epoch"])
-    if last_logged_epoch(log_path) != completed_epoch:
-        raise ValueError("training_log.csv and last checkpoint disagree on the completed epoch")
+    if log_path.is_file():
+        if last_logged_epoch(log_path) != completed_epoch:
+            raise ValueError("training_log.csv and last checkpoint disagree on the completed epoch")
+    else:
+        print(f"RESUME WARNING: {log_path} is missing; it will be recreated from the next epoch.")
     model.load_state_dict(checkpoint["model"], strict=True)
     optimizer.load_state_dict(checkpoint["opt"])
     scaler.load_state_dict(checkpoint["scaler"])
+    if "scheduler" in checkpoint:
+        scheduler.load_state_dict(checkpoint["scheduler"])
+    else:
+        set_scheduler_resume_position(scheduler, optimizer, args, completed_epoch)
     return completed_epoch + 1, float(checkpoint["best_val_dice"])
 
 
@@ -147,6 +186,8 @@ def main():
     parser.add_argument("--val_workers", type=int, default=0)
     parser.add_argument("--samples_per_patient", type=int, default=1)
     parser.add_argument("--fusion_reduction", type=int, default=4)
+    parser.add_argument("--warmup_epochs", type=int, default=10)
+    parser.add_argument("--eta_min", type=float, default=1e-4)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--resume", type=Path, help="Resume from last_patient_split.pth")
     args = parser.parse_args()
@@ -154,11 +195,14 @@ def main():
     if not args.run_name or any(char in args.run_name for char in "/\\:"):
         parser.error("run_name must be non-empty and cannot contain path separators")
     if (args.epochs < 1 or args.batch_size < 1 or args.lr <= 0 or
-            args.num_workers < 0 or args.val_workers < 0 or args.fusion_reduction < 1):
+            args.num_workers < 0 or args.val_workers < 0 or args.fusion_reduction < 1 or
+            args.warmup_epochs < 1 or args.eta_min <= 0 or args.eta_min > args.lr):
         parser.error(
             "epochs, batch_size, learning rate, and fusion_reduction must be positive; "
-            "workers cannot be negative"
+            "workers cannot be negative; eta_min must be in (0, lr]"
         )
+    if args.warmup_epochs > args.epochs:
+        parser.error("warmup_epochs cannot exceed epochs")
     device = torch.device(args.device)
     if device.type == "cuda" and not torch.cuda.is_available():
         raise RuntimeError("CUDA requested but unavailable in this Python environment")
@@ -206,9 +250,11 @@ def main():
         fusion_reduction=args.fusion_reduction,
     ).to(device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=Cfg.weight_decay)
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-        optimizer, T_max=args.epochs, eta_min=1e-6,
+    scheduler = torch.optim.lr_scheduler.LambdaLR(
+        optimizer,
+        make_warmup_cosine_lambda(args.epochs, args.warmup_epochs, args.lr, args.eta_min),
     )
+    print_lr_schedule_preview(args)
     criterion = DiceCELoss(num_classes=4)
     scaler = torch.cuda.amp.GradScaler(enabled=device.type == "cuda")
     manifest_sha256 = hashlib.sha256(split_json.read_bytes()).hexdigest()
@@ -216,7 +262,7 @@ def main():
     start_epoch = 1
     if resume_path is not None:
         start_epoch, best_validation_dice = load_resume_state(
-            resume_path, model, optimizer, scaler, manifest_sha256, args, log_path,
+            resume_path, model, optimizer, scaler, manifest_sha256, args, log_path, scheduler,
         )
         if start_epoch > args.epochs:
             raise ValueError(
@@ -228,13 +274,13 @@ def main():
             f"restored learning rate={optimizer.param_groups[0]['lr']}."
         )
 
-    log_mode = "a" if resume_path else "x"
+    log_mode = "a" if resume_path and log_path.exists() else "x"
     batch_log_mode = "a" if batch_log_path.exists() else "x"
     with log_path.open(log_mode, newline="", encoding="utf-8") as log_handle, \
             batch_log_path.open(batch_log_mode, newline="", encoding="utf-8") as batch_log_handle:
         log_writer = csv.DictWriter(log_handle, fieldnames=LOG_COLUMNS)
         batch_log_writer = csv.DictWriter(batch_log_handle, fieldnames=BATCH_LOG_COLUMNS)
-        if not resume_path:
+        if log_mode == "x":
             log_writer.writeheader()
         if batch_log_mode == "x":
             batch_log_writer.writeheader()
@@ -256,6 +302,8 @@ def main():
                     logits = model(images)
                     loss = criterion(logits, targets)
                 scaler.scale(loss).backward()
+                scaler.unscale_(optimizer)
+                torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
                 scaler.step(optimizer)
                 scaler.update()
                 batch_loss = float(loss.item())
@@ -297,9 +345,11 @@ def main():
             }
             log_writer.writerow(row)
             log_handle.flush()
+            scheduler.step()
             checkpoint = {
                 "epoch": epoch, "model": model.state_dict(), "opt": optimizer.state_dict(),
-                "scaler": scaler.state_dict(), "best_val_dice": max(best_validation_dice, selection_dice),
+                "scaler": scaler.state_dict(), "scheduler": scheduler.state_dict(),
+                "best_val_dice": max(best_validation_dice, selection_dice),
                 "val_dice_mean": selection_dice, "split_manifest_sha256": manifest_sha256,
                 "train_split": args.train_split, "val_split": args.val_split,
                 "roi_size": args.roi_size, "seed": args.seed,
@@ -307,6 +357,8 @@ def main():
                 "samples_per_patient": args.samples_per_patient,
                 "fusion_reduction": args.fusion_reduction,
                 "run_name": args.run_name,
+                "warmup_epochs": args.warmup_epochs,
+                "eta_min": args.eta_min,
             }
             save_checkpoint_atomic(last_path, checkpoint)
             if selection_dice > best_validation_dice:
@@ -320,7 +372,6 @@ def main():
                 f"WT={val_dice['wt']:.6f} TC={val_dice['tc']:.6f} "
                 f"ET={val_dice['et']:.6f} lr={learning_rate:.9g} time={elapsed:.1f}s"
             )
-            scheduler.step()
 
 
 if __name__ == "__main__":
