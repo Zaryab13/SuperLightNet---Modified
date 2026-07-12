@@ -1,0 +1,71 @@
+{
+  "source_checkpoint": "D:\\Zaryab\\3D Segmention-Brain Tumor\\SuperLightNet - Modified\\checkpoints\\leakage_safe\\best_patient_split.pth",
+  "source_checkpoint_epoch": 68,
+  "student_teacher_identical": true,
+  "max_parameter_difference": 0.0,
+  "teacher_full_stored": {
+    "wt": 0.8616756111689011,
+    "tc": 0.8342918984380353,
+    "et": 0.7996586234953138
+  },
+  "epoch0_all": {
+    "wt": 0.8616772105382933,
+    "tc": 0.8342985799967046,
+    "et": 0.799668937359359
+  },
+  "epoch0_drop_t1ce": {
+    "wt": 0.8361767421421162,
+    "tc": 0.21194527657916656,
+    "et": 0.06074421770242417
+  },
+  "teacher_all_baseline": 0.8318815759647856,
+  "full_constraint_threshold": 0.806925128685842,
+  "batchnorm_modules_frozen": 42,
+  "batchnorm_affine_parameters_frozen": 5312,
+  "trainable_optimizer_parameters": 5790436,
+  "resolved_config": {
+    "seed": 44,
+    "checkpoint": "D:\\Zaryab\\3D Segmention-Brain Tumor\\SuperLightNet - Modified\\checkpoints\\leakage_safe\\best_patient_split.pth",
+    "teacher_sha256": "c24cb1ce804abfba205fc660bd762b520b949180d2e8d4e111bc2ee576fdd3c4",
+    "split_json": "D:\\Zaryab\\3D Segmention-Brain Tumor\\SuperLightNet - Modified\\splits\\patient_splits.json",
+    "checkpoint_dir": "D:\\Zaryab\\3D Segmention-Brain Tumor\\SuperLightNet - Modified\\checkpoints\\self_distill_v3_seed44",
+    "result_dir": "D:\\Zaryab\\3D Segmention-Brain Tumor\\SuperLightNet - Modified\\results\\self_distill_v3_seed44",
+    "device": "cuda",
+    "epochs": 30,
+    "optimizer": "AdamW",
+    "lr": 5e-05,
+    "weight_decay": 1e-05,
+    "lr_schedule": null,
+    "batch_size": 1,
+    "roi_size": [
+      160,
+      160,
+      160
+    ],
+    "overlap": 0.5,
+    "num_workers": 4,
+    "samples_per_patient": 1,
+    "val_every": 5,
+    "early_stop_patience": 15,
+    "w_seg": 1.0,
+    "w_kd": 1.0,
+    "w_feat": 0.5,
+    "temperature": 2.0,
+    "kd_loss": "KL(log_softmax(student/T), softmax(teacher/T)) * T^2",
+    "feature_loss": "mean SmoothL1(beta=1.0) over fused_bottleneck and aggregated_skips",
+    "mask_probabilities": {
+      "full_anchor": 0.45,
+      "drop_t1ce": 0.35,
+      "random_subset": 0.2
+    },
+    "random_subset_keep_count": "uniform_integer_1_to_3",
+    "selection": "max drop_t1ce mean(TC,ET) subject to all_mean >= 0.97*teacher_all_baseline",
+    "autocast_dtype": "bfloat16",
+    "grad_scaler": false,
+    "max_grad_norm": 1.0,
+    "batchnorm_running_stats_frozen": true,
+    "batchnorm_affine_frozen": true,
+    "dataloader_worker_seeding": "torch.initial_seed derived from seeded generator"
+  },
+  "teacher_sha256": "c24cb1ce804abfba205fc660bd762b520b949180d2e8d4e111bc2ee576fdd3c4"
+}

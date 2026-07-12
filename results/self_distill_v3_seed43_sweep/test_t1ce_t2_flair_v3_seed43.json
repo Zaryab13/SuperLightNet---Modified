@@ -1,0 +1,71 @@
+{
+  "split": "test",
+  "fold": 0,
+  "modalities": [
+    "t1ce",
+    "t2",
+    "flair"
+  ],
+  "checkpoint": "D:\\Zaryab\\3D Segmention-Brain Tumor\\SuperLightNet - Modified\\checkpoints\\self_distill_v3_seed43\\best_self_distill_v3_seed43.pth",
+  "case_count": 126,
+  "empty_mask_policy": {
+    "both_empty": {
+      "dice": 1.0,
+      "hd95_mm": 0.0
+    },
+    "one_empty": {
+      "dice": 0.0,
+      "hd95_mm": "physical image diagonal"
+    }
+  },
+  "statistics": {
+    "dice_wt": {
+      "mean": 0.8960867967141317,
+      "std": 0.10325455081164558,
+      "median": 0.9305305070562411,
+      "iqr": 0.0865863699618099
+    },
+    "dice_tc": {
+      "mean": 0.8293230026117159,
+      "std": 0.26203689923254253,
+      "median": 0.9306302527659092,
+      "iqr": 0.11170210340331799
+    },
+    "dice_et": {
+      "mean": 0.8297120690662771,
+      "std": 0.20002031997767594,
+      "median": 0.8962349840468413,
+      "iqr": 0.13929853249164592
+    },
+    "hd95_wt": {
+      "mean": 6.38703207333189,
+      "std": 9.883360603129088,
+      "median": 2.449489742783178,
+      "iqr": 4.870306428621718
+    },
+    "hd95_tc": {
+      "mean": 11.416063805920464,
+      "std": 46.71653444016514,
+      "median": 2.0,
+      "iqr": 3.9747448713915894
+    },
+    "hd95_et": {
+      "mean": 9.616522351709035,
+      "std": 46.47492124993973,
+      "median": 1.0,
+      "iqr": 2.0
+    },
+    "inference_time_sec": {
+      "mean": 0.6034749476192889,
+      "std": 0.019532250068213724,
+      "median": 0.600659949996043,
+      "iqr": 0.023506099994847318
+    },
+    "peak_gpu_memory_mb": {
+      "mean": 1680.89208984375,
+      "std": 0.0,
+      "median": 1680.89208984375,
+      "iqr": 0.0
+    }
+  }
+}
