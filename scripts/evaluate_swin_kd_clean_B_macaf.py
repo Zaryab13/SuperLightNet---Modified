@@ -343,7 +343,7 @@ def main():
     parser.add_argument("--checkpoint", type=Path,
                         default=Path("checkpoints/swin_kd_clean_B_macaf/best.pth"))
     parser.add_argument("--output_dir", type=Path,
-                        default=Path("results/swin_kd_clean_B_macaf_sweep"))
+                        default=Path("results/macaf_experiments/kd_clean_swin/sweep"))
     parser.add_argument("--output_csv", type=Path)
     parser.add_argument("--device", default="cuda")
     parser.add_argument("--modalities", type=parse_modalities, default=MODEL_MODALITIES)
@@ -384,13 +384,13 @@ def main():
         for selected_modalities in subsets:
             output_csv = (
                 args.output_dir /
-                f"{args.split}_{output_stem(selected_modalities)}_swin_kd_cleanB.csv"
+                f"{args.split}_{output_stem(selected_modalities)}_macaf_clean_swin_kd_sweep.csv"
             )
             evaluate_subset(args, model, device, evaluation_ids, case_paths, selected_modalities, output_csv)
     else:
         output_csv = args.output_csv or (
             args.output_dir /
-            f"{args.split}_{output_stem(args.modalities)}_swin_kd_cleanB.csv"
+            f"{args.split}_{output_stem(args.modalities)}_macaf_clean_swin_kd_sweep.csv"
         )
         evaluate_subset(args, model, device, evaluation_ids, case_paths, args.modalities, output_csv)
 

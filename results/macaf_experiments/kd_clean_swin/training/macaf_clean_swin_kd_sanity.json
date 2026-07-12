@@ -1,0 +1,121 @@
+{
+  "source_checkpoint": "D:\\SuperLignet Modified Project\\SuperLightNet---Modified\\checkpoints\\macaf\\best_patient_split.pth",
+  "source_checkpoint_epoch": 95,
+  "student_full_stored": {
+    "wt": 0.8088861166765025,
+    "tc": 0.8099020176611818,
+    "et": 0.7851799542437097
+  },
+  "epoch0_all": {
+    "wt": 0.8088880883583222,
+    "tc": 0.8099020359051549,
+    "et": 0.7851808618362557
+  },
+  "epoch0_drop_t1ce": {
+    "wt": 0.7860265657761263,
+    "tc": 0.5683693509549776,
+    "et": 0.4112851122105304
+  },
+  "student_all_baseline": 0.8013236620332442,
+  "full_constraint_threshold": 0.7772839521722469,
+  "teacher_checkpoint": "D:\\SuperLignet Modified Project\\SuperLightNet---Modified\\checkpoints\\swin_teacher_clean\\best.pth",
+  "teacher_checkpoint_sha256": "62d166b0cf82e41a21bdd018f6c8ca901833a9f29f732c9468192ff45cbdcb80",
+  "teacher_sanity": {
+    "case_ids": [
+      "BraTS2021_00000",
+      "BraTS2021_00005",
+      "BraTS2021_00006",
+      "BraTS2021_00008",
+      "BraTS2021_00011"
+    ],
+    "per_case": [
+      {
+        "tc": 0.9811929431531784,
+        "wt": 0.9540436995958924,
+        "et": 0.9613630184575416
+      },
+      {
+        "tc": 0.9706293416707215,
+        "wt": 0.9601102443585895,
+        "et": 0.9223971046208231
+      },
+      {
+        "tc": 0.9371925533360511,
+        "wt": 0.9774449185752851,
+        "et": 0.9228074017299901
+      },
+      {
+        "tc": 0.5444546287809349,
+        "wt": 0.9228687415426252,
+        "et": 0.5356125356125356
+      },
+      {
+        "tc": 0.8896756291263994,
+        "wt": 0.9562903838844545,
+        "et": 0.9061561931007333
+      }
+    ],
+    "mean": {
+      "wt": 0.9541515975913694,
+      "tc": 0.8646290192134571,
+      "et": 0.8496672507043247
+    }
+  },
+  "leakage_gate": {
+    "train_cases": 1000,
+    "validation_cases": 125,
+    "test_cases": 126,
+    "overlaps": {
+      "train_val": [],
+      "train_test": [],
+      "val_test": []
+    },
+    "split_manifest_sha256": "9b411a68dc8ac8878d5e01f40b966d451d926c68afa6b960bf40a38422a55881",
+    "teacher_split_manifest_sha256": "9b411a68dc8ac8878d5e01f40b966d451d926c68afa6b960bf40a38422a55881",
+    "teacher_modalities": [
+      "t1",
+      "t1ce",
+      "t2",
+      "flair"
+    ],
+    "student_modalities": [
+      "t1",
+      "t1ce",
+      "t2",
+      "flair"
+    ],
+    "student_to_teacher_reorder": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "teacher_region_order": [
+      "tc",
+      "wt",
+      "et"
+    ],
+    "teacher_test_access": false
+  },
+  "normalization": "per-channel z-score over nonzero voxels",
+  "teacher_region_order": [
+    "tc",
+    "wt",
+    "et"
+  ],
+  "teacher_modalities": [
+    "t1",
+    "t1ce",
+    "t2",
+    "flair"
+  ],
+  "student_to_teacher_reorder": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "batchnorm_modules_frozen": 42,
+  "batchnorm_affine_parameters_frozen": 5312,
+  "trainable_optimizer_parameters": 5809968
+}

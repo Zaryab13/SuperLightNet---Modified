@@ -90,10 +90,10 @@ def resolve_dataset_root(split_json: Path) -> Path:
 
 def safe_output_paths(overwrite: bool) -> Tuple[Path, Path, Path]:
     ckpt_dir = PROJECT_ROOT / "checkpoints" / "macaf_swin_kd"
-    result_dir = PROJECT_ROOT / "results" / "macaf_swin_kd"
+    result_dir = PROJECT_ROOT / "results" / "macaf_experiments" / "kd_old_swin" / "training"
     ckpt_dir.mkdir(parents=True, exist_ok=True)
     result_dir.mkdir(parents=True, exist_ok=True)
-    log_path = result_dir / "training_log.csv"
+    log_path = result_dir / "macaf_old_swin_kd_training_log.csv"
     best_path = ckpt_dir / "best_macaf_swin_kd.pth"
     last_path = ckpt_dir / "last_macaf_swin_kd.pth"
     existing = [path for path in (log_path, best_path, last_path) if path.exists()]

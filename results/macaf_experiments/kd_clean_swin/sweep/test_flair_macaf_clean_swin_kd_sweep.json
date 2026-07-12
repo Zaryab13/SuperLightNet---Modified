@@ -1,0 +1,81 @@
+{
+  "split": "test",
+  "fold": 0,
+  "modalities": [
+    "flair"
+  ],
+  "model_modality_order": [
+    "t1",
+    "t1ce",
+    "t2",
+    "flair"
+  ],
+  "avail_mask": [
+    false,
+    false,
+    false,
+    true
+  ],
+  "checkpoint": "D:\\SuperLignet Modified Project\\SuperLightNet---Modified\\checkpoints\\swin_kd_clean_B_macaf\\best.pth",
+  "case_count": 126,
+  "empty_mask_policy": {
+    "both_empty": {
+      "dice": 1.0,
+      "hd95_mm": 0.0
+    },
+    "one_empty": {
+      "dice": 0.0,
+      "hd95_mm": "physical image diagonal"
+    }
+  },
+  "statistics": {
+    "dice_wt": {
+      "mean": 0.8519219820413019,
+      "std": 0.14380195098694842,
+      "median": 0.8973512813939104,
+      "iqr": 0.12234941267926902
+    },
+    "dice_tc": {
+      "mean": 0.5490720557176213,
+      "std": 0.27234533608851585,
+      "median": 0.6435253086691721,
+      "iqr": 0.43359295689637734
+    },
+    "dice_et": {
+      "mean": 0.3848681709391483,
+      "std": 0.22177628260753598,
+      "median": 0.42630181720564864,
+      "iqr": 0.3056745310740117
+    },
+    "hd95_wt": {
+      "mean": 11.537362402826947,
+      "std": 18.37138812105571,
+      "median": 4.47213595499958,
+      "iqr": 7.393890472916379
+    },
+    "hd95_tc": {
+      "mean": 21.258934180704706,
+      "std": 37.70354488250699,
+      "median": 11.0,
+      "iqr": 11.259588341674476
+    },
+    "hd95_et": {
+      "mean": 29.78673679210252,
+      "std": 71.66045286805358,
+      "median": 9.24468313509701,
+      "iqr": 13.898574561745319
+    },
+    "inference_time_sec": {
+      "mean": 0.8101856547614766,
+      "std": 0.009765591935183495,
+      "median": 0.8093693499977235,
+      "iqr": 0.01287110000703251
+    },
+    "peak_gpu_memory_mb": {
+      "mean": 789.95849609375,
+      "std": 0.0,
+      "median": 789.95849609375,
+      "iqr": 0.0
+    }
+  }
+}

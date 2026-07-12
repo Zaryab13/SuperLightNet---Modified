@@ -86,8 +86,11 @@ def validate_output_locations(output_dir: Path | None, run_name: str, resume: Pa
     output_dir.mkdir(parents=True, exist_ok=True)
     best_path = output_dir / "best_patient_split.pth"
     last_path = output_dir / "last_patient_split.pth"
-    log_path = PROJECT_ROOT / "results" / suffix / "training_log.csv"
-    batch_log_path = PROJECT_ROOT / "results" / suffix / "batch_log.csv"
+    version = "v1" if suffix == "macaf" else suffix.removeprefix("macaf_")
+    result_dir = PROJECT_ROOT / "results" / "macaf_experiments" / "base" / version / "training"
+    result_dir.mkdir(parents=True, exist_ok=True)
+    log_path = result_dir / f"macaf_{version}_training_log.csv"
+    batch_log_path = result_dir / f"macaf_{version}_training_batch_log.csv"
     log_path.parent.mkdir(parents=True, exist_ok=True)
     if resume is None:
         existing = [path for path in (best_path, last_path, log_path, batch_log_path) if path.exists()]

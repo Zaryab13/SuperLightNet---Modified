@@ -1,32 +1,17 @@
-# Results organization — MACAF branch
+# MACAF results organization
 
-This branch is for MACAF-family experiments and results.
+All MACAF-family artifacts live under `results/macaf_experiments/`.
 
-## Keep on `macaf` branch
+- `base/v1/`: original MACAF baseline, with separate `training/` and `sweep/` folders.
+- `base/v2/`: cosine-decay MACAF v2 baseline and sweep.
+- `base/v3/`: warmup/cosine/clipping MACAF v3 baseline and sweep.
+- `kd_old_swin/`: MACAF distilled from the older Swin teacher.
+- `self_kd/`: reserved for MACAF self-distillation; no artifacts are present on this branch.
+- `kd_clean_swin/`: MACAF v1 distilled from the clean, test-safe Swin teacher.
+- `teacher_sanity/`: clean Swin teacher sanity evaluation.
 
-- `results/macaf/`
-  - MACAF v1 / base MACAF / no-KD MACAF.
-  - Original tracked files keep historical names such as `test_all_macaf.csv`.
-  - Clean upload bundle: `results/macaf/_upload_macaf_v1_no_kd_for_claude/`.
+Canonical experiment folders use descriptive filenames containing the MACAF version,
+training/sweep role, and KD type. Historical duplicate exports remain under nested
+`archive_upload/` and `archive_legacy_sweep/` folders for auditability.
 
-- `results/macaf_v2/`
-  - MACAF v2 cosine/aggressive LR variant.
-  - Rejected/degraded run; keep for audit/comparison, not as the main method.
-
-- `results/macaf_swin_kd/`
-  - MACAF-Swin-KD run.
-  - Original tracked files may include historical names.
-  - Clear renamed files use `_macaf_swin_kd` suffix.
-  - Clean upload bundle: `results/macaf_swin_kd/_upload_macaf_swin_kd_for_claude/`.
-
-- `figures/macaf_v1_training_curves.*` and `figures/macaf_v2_training_curves.*`
-  - MACAF training visualizations.
-
-## Keep on `main` branch, not here
-
-- Mean-fusion base/RMD-on corrected eval results.
-- Mean-fusion RMD-off ablation: `results/ablation_no_rmd/`.
-- Mean-fusion Swin-KD: `results/swin_kd_v1/`, `results/swin_kd_v1_sweep/`.
-- Swin teacher sanity: `results/swin_teacher_sanity/`.
-
-This split prevents Claude/manuscript drafting from mixing MACAF, MACAF-Swin-KD, and mean-fusion KD results.
+Mean-fusion results remain outside this hierarchy, for example `results/leakage_safe/`.

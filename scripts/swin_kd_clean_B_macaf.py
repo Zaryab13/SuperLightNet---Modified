@@ -32,7 +32,9 @@ from superlightnet.patient_data import PatientPatchDataset, PatientVolumeDataset
 from superlightnet.training import save_checkpoint_atomic  # noqa: E402
 
 CHECKPOINT_DIR = PROJECT_ROOT / "checkpoints" / "swin_kd_clean_B_macaf"
-RESULT_DIR = PROJECT_ROOT / "results" / "swin_kd_clean_B_macaf"
+RESULT_DIR = (
+    PROJECT_ROOT / "results" / "macaf_experiments" / "kd_clean_swin" / "training"
+)
 ALL_MODALITIES = ("t1", "t1ce", "t2", "flair")
 DROP_T1CE_MODALITIES = ("t1", "t2", "flair")
 EXPECTED_TEACHER_MODALITIES = ("t1", "t1ce", "t2", "flair")
@@ -533,7 +535,8 @@ def main() -> None:
     )
 
     stored = common.stored_validation_row(
-        PROJECT_ROOT / "results" / "macaf" / "training_log.csv",
+        PROJECT_ROOT / "results" / "macaf_experiments" / "base" / "v1" /
+        "training" / "macaf_v1_training_log.csv",
         args.source_checkpoint_epoch,
     )
     epoch_zero_all, epoch_zero_drop = v2.validate_both(
@@ -585,7 +588,7 @@ def main() -> None:
 
     CHECKPOINT_DIR.mkdir(parents=True, exist_ok=True)
     RESULT_DIR.mkdir(parents=True, exist_ok=False)
-    (RESULT_DIR / "sanity.json").write_text(json.dumps({
+    (RESULT_DIR / "macaf_clean_swin_kd_sanity.json").write_text(json.dumps({
         "source_checkpoint": str(checkpoint_path),
         "source_checkpoint_epoch": args.source_checkpoint_epoch,
         "student_full_stored": stored,
@@ -624,9 +627,9 @@ def main() -> None:
     nonfinite_steps = []
     successful_global_steps = 0
 
-    epoch_path = RESULT_DIR / "training_log.csv"
-    batch_path = RESULT_DIR / "training_batch_log.csv"
-    tradeoff_path = RESULT_DIR / "validation_tradeoff.csv"
+    epoch_path = RESULT_DIR / "macaf_clean_swin_kd_training_log.csv"
+    batch_path = RESULT_DIR / "macaf_clean_swin_kd_training_batch_log.csv"
+    tradeoff_path = RESULT_DIR / "macaf_clean_swin_kd_validation_tradeoff.csv"
     with epoch_path.open("x", newline="", encoding="utf-8") as epoch_handle, \
             batch_path.open("x", newline="", encoding="utf-8") as batch_handle, \
             tradeoff_path.open("x", newline="", encoding="utf-8") as tradeoff_handle:
@@ -788,7 +791,7 @@ def main() -> None:
                         "nonfinite_steps": nonfinite_steps,
                         "passed": len(nonfinite_steps) == 0,
                     }
-                    (RESULT_DIR / "stability_200.json").write_text(
+                    (RESULT_DIR / "macaf_clean_swin_kd_stability_200.json").write_text(
                         json.dumps(stability, indent=2) + "\n", encoding="utf-8",
                     )
                     print("STABILITY first_200_steps_passed=True nonfinite_losses=0", flush=True)
@@ -914,7 +917,7 @@ def main() -> None:
         "nonfinite_steps": nonfinite_steps,
         "validation_tradeoff": validation_history,
     }
-    (RESULT_DIR / "selection_status.json").write_text(
+    (RESULT_DIR / "macaf_clean_swin_kd_selection_status.json").write_text(
         json.dumps(selection_status, indent=2) + "\n", encoding="utf-8",
     )
     if best_epoch is None:

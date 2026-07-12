@@ -336,7 +336,10 @@ def main():
     parser.add_argument("--split_json", type=Path, default=Path("splits/patient_splits.json"))
     parser.add_argument("--split", choices=("val", "test"), default="test")
     parser.add_argument("--checkpoint", type=Path, default=Path("checkpoints/macaf/best_patient_split.pth"))
-    parser.add_argument("--output_dir", type=Path, default=Path("results/macaf"))
+    parser.add_argument(
+        "--output_dir", type=Path,
+        default=Path("results/macaf_experiments/base/v1/sweep"),
+    )
     parser.add_argument("--output_csv", type=Path)
     parser.add_argument("--device", default="cuda")
     parser.add_argument("--modalities", type=parse_modalities, default=MODEL_MODALITIES)
@@ -375,10 +378,10 @@ def main():
     if args.sweep:
         subsets = all_modality_subsets()
         for selected_modalities in subsets:
-            output_csv = args.output_dir / f"{args.split}_{output_stem(selected_modalities)}_macaf.csv"
+            output_csv = args.output_dir / f"{args.split}_{output_stem(selected_modalities)}_macaf_v1_sweep.csv"
             evaluate_subset(args, model, device, evaluation_ids, case_paths, selected_modalities, output_csv)
     else:
-        output_csv = args.output_csv or args.output_dir / f"{args.split}_{output_stem(args.modalities)}_macaf.csv"
+        output_csv = args.output_csv or args.output_dir / f"{args.split}_{output_stem(args.modalities)}_macaf_v1_sweep.csv"
         evaluate_subset(args, model, device, evaluation_ids, case_paths, args.modalities, output_csv)
 
 

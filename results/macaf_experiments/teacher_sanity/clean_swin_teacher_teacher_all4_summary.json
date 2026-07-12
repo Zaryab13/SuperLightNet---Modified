@@ -1,0 +1,51 @@
+{
+  "checkpoint": "D:\\SuperLignet Modified Project\\SuperLightNet---Modified\\pretrained_teachers\\swin_unetr_brats21_fold0.pth",
+  "checkpoint_sha256": "1083e1585263a73919a5ecfee9403989ca4bfd2ec70308679667bd23b53714b4",
+  "checkpoint_epoch": 279,
+  "checkpoint_best_acc": "0.8853922",
+  "split_json": "D:\\SuperLignet Modified Project\\SuperLightNet---Modified\\splits\\patient_splits.json",
+  "split_manifest_sha256": "9b411a68dc8ac8878d5e01f40b966d451d926c68afa6b960bf40a38422a55881",
+  "split": "test",
+  "case_count": 126,
+  "model_modalities": [
+    "t1",
+    "t1ce",
+    "t2",
+    "flair"
+  ],
+  "teacher_modalities": [
+    "flair",
+    "t1ce",
+    "t1",
+    "t2"
+  ],
+  "teacher_reorder": [
+    3,
+    1,
+    0,
+    2
+  ],
+  "teacher_output_order": [
+    "tc",
+    "wt",
+    "et"
+  ],
+  "threshold": 0.5,
+  "roi_size": [
+    128,
+    128,
+    128
+  ],
+  "overlap": 0.5,
+  "mean_dice": {
+    "wt": 0.9287289556898122,
+    "tc": 0.9123819479188932,
+    "et": 0.8761021497111576
+  },
+  "median_dice": {
+    "wt": 0.9445145243178441,
+    "tc": 0.9596737899156719,
+    "et": 0.9273243673115346
+  },
+  "total_time_sec": 321.8930653000134
+}
