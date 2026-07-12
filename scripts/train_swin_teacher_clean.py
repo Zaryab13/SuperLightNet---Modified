@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+from concurrent.futures import process
 import csv
 import hashlib
 import json
@@ -156,19 +157,27 @@ def check_gpu_idle(gpu_index: int) -> None:
             processes = nvmlDeviceGetComputeRunningProcesses(handle)
         except NVMLError as exc:
             raise RuntimeError("Unable to query GPU compute-process memory safely") from exc
+
         for process in processes:
-            used = int(process.usedGpuMemory)
+            used = process.usedGpuMemory
+
+            if used is None:
+                continue
+
+            used = int(used)
+
             if used <= 0 or used > total_memory:
                 raise RuntimeError(f"Unable to verify GPU memory for compute PID {process.pid}")
+
             if process.pid != os.getpid() and used > 1024**3:
                 busy.append((int(process.pid), used / 1024**2))
+
     finally:
         nvmlShutdown()
 
     if busy:
         print(f"GPU BUSY - not starting: {busy}", flush=True)
         raise SystemExit(2)
-
 
 def labels_to_regions(labels: torch.Tensor) -> torch.Tensor:
     """Convert contiguous BraTS labels to output order (TC, WT, ET)."""
