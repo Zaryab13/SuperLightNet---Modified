@@ -1,0 +1,87 @@
+{
+  "split": "test",
+  "modalities": [
+    "t1ce"
+  ],
+  "case_count": 126,
+  "checkpoint": "D:\\Zaryab\\3D Segmention-Brain Tumor\\SuperLightNet - Modified\\checkpoints\\segresnet_teacher_clean\\best.pth",
+  "checkpoint_sha256": "60920f9a5e9efb48b71b78ee701dad63c3212fe8e5d0c2f479473e5749e135c7",
+  "checkpoint_epoch": 115,
+  "checkpoint_monai_version": "1.5.2",
+  "runtime_monai_version": "1.4.0",
+  "checkpoint_git_commit_sha": "6492c04ef6c02410208aea341a2e0f99d0ef19b2",
+  "evaluator_git_commit_sha": "bd4a2fddca34721f21d34343b8c887d820e24de2",
+  "split_manifest_sha256": "9b411a68dc8ac8878d5e01f40b966d451d926c68afa6b960bf40a38422a55881",
+  "region_order": "(TC,WT,ET)",
+  "inference": {
+    "roi_size": [
+      128,
+      128,
+      128
+    ],
+    "overlap": 0.5,
+    "blending": "constant",
+    "precision": "float32",
+    "threshold": 0.5
+  },
+  "empty_mask_policy": {
+    "both_empty": {
+      "dice": 1.0,
+      "hd95_mm": 0.0
+    },
+    "one_empty": {
+      "dice": 0.0,
+      "hd95_mm": "physical image diagonal"
+    }
+  },
+  "statistics": {
+    "dice_wt": {
+      "mean": 0.1413424063553801,
+      "std": 0.1838823042638776,
+      "median": 0.053240781752076485,
+      "iqr": 0.2584758262271686
+    },
+    "dice_tc": {
+      "mean": 0.287889546133505,
+      "std": 0.3407251839306044,
+      "median": 0.0767874818232284,
+      "iqr": 0.6354130089062368
+    },
+    "dice_et": {
+      "mean": 0.29852614686596807,
+      "std": 0.3389622532263161,
+      "median": 0.11990183141584922,
+      "iqr": 0.6187620604415892
+    },
+    "hd95_wt": {
+      "mean": 140.18643980222592,
+      "std": 156.17184325442793,
+      "median": 36.87768932069478,
+      "iqr": 344.9789207715199
+    },
+    "hd95_tc": {
+      "mean": 141.28704174874966,
+      "std": 166.86377854558765,
+      "median": 25.24790608690677,
+      "iqr": 359.9060006307478
+    },
+    "hd95_et": {
+      "mean": 119.07431878354855,
+      "std": 158.16434040585128,
+      "median": 23.345235059857504,
+      "iqr": 363.1723444907543
+    },
+    "inference_time_sec": {
+      "mean": 0.9404903079364828,
+      "std": 0.062294562225108735,
+      "median": 0.9054287499966449,
+      "iqr": 0.07650277500215452
+    },
+    "peak_gpu_memory_mb": {
+      "mean": 637.3965773809524,
+      "std": 16.149206531138617,
+      "median": 635.9521484375,
+      "iqr": 0.0
+    }
+  }
+}
