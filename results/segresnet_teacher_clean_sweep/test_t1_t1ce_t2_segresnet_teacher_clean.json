@@ -1,0 +1,89 @@
+{
+  "split": "test",
+  "modalities": [
+    "t1",
+    "t1ce",
+    "t2"
+  ],
+  "case_count": 126,
+  "checkpoint": "D:\\Zaryab\\3D Segmention-Brain Tumor\\SuperLightNet - Modified\\checkpoints\\segresnet_teacher_clean\\best.pth",
+  "checkpoint_sha256": "60920f9a5e9efb48b71b78ee701dad63c3212fe8e5d0c2f479473e5749e135c7",
+  "checkpoint_epoch": 115,
+  "checkpoint_monai_version": "1.5.2",
+  "runtime_monai_version": "1.4.0",
+  "checkpoint_git_commit_sha": "6492c04ef6c02410208aea341a2e0f99d0ef19b2",
+  "evaluator_git_commit_sha": "bd4a2fddca34721f21d34343b8c887d820e24de2",
+  "split_manifest_sha256": "9b411a68dc8ac8878d5e01f40b966d451d926c68afa6b960bf40a38422a55881",
+  "region_order": "(TC,WT,ET)",
+  "inference": {
+    "roi_size": [
+      128,
+      128,
+      128
+    ],
+    "overlap": 0.5,
+    "blending": "constant",
+    "precision": "float32",
+    "threshold": 0.5
+  },
+  "empty_mask_policy": {
+    "both_empty": {
+      "dice": 1.0,
+      "hd95_mm": 0.0
+    },
+    "one_empty": {
+      "dice": 0.0,
+      "hd95_mm": "physical image diagonal"
+    }
+  },
+  "statistics": {
+    "dice_wt": {
+      "mean": 0.6561903024191642,
+      "std": 0.22957710254953845,
+      "median": 0.7323587976309626,
+      "iqr": 0.23381769800387153
+    },
+    "dice_tc": {
+      "mean": 0.7997804208088242,
+      "std": 0.2644093837404973,
+      "median": 0.9163022945805759,
+      "iqr": 0.1532937212354496
+    },
+    "dice_et": {
+      "mean": 0.7727379660203785,
+      "std": 0.24757837888889447,
+      "median": 0.8588056502240287,
+      "iqr": 0.1823058468892772
+    },
+    "hd95_wt": {
+      "mean": 26.08026172938147,
+      "std": 63.92517714175875,
+      "median": 10.977225575051662,
+      "iqr": 10.751081118338588
+    },
+    "hd95_tc": {
+      "mean": 22.418081911967825,
+      "std": 71.89948192366305,
+      "median": 3.605551275463989,
+      "iqr": 7.707675041191794
+    },
+    "hd95_et": {
+      "mean": 20.24811595282044,
+      "std": 71.97967278606409,
+      "median": 2.0,
+      "iqr": 4.313628483749074
+    },
+    "inference_time_sec": {
+      "mean": 0.9682034674611742,
+      "std": 0.05171633452674367,
+      "median": 0.9631696999931592,
+      "iqr": 0.0056675500054552685
+    },
+    "peak_gpu_memory_mb": {
+      "mean": 637.3965773809524,
+      "std": 16.149206531138617,
+      "median": 635.9521484375,
+      "iqr": 0.0
+    }
+  }
+}

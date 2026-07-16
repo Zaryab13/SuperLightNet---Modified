@@ -1,9 +1,17 @@
-torch>=2.0.0
-torchvision>=0.15.0
-monai>=1.2.0
-nibabel>=5.1.0
-numpy>=1.23.0
-scipy>=1.10.0
+--extra-index-url https://download.pytorch.org/whl/cu124
+
+# Reproducible PC3 teacher-training stack (Python 3.11, RTX 4090).
+torch==2.6.0+cu124
+torchvision==0.21.0+cu124
+torchaudio==2.6.0+cu124
+monai==1.5.2
+nibabel==5.3.2
+numpy==1.26.4
+scipy==1.15.2
+einops==0.8.1
+nvidia-ml-py==12.570.86
+
+# Existing repository utilities and interfaces.
 scikit-learn>=1.2.0
 tqdm>=4.65.0
 gradio>=4.0.0
